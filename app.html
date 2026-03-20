@@ -1,0 +1,2687 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TAOBUN Management Suite</title>
+
+<link rel="manifest" href="manifest.json">
+<!-- Anti-flash: apply saved theme before first paint -->
+<script>
+  (function(){
+    try {
+      var d = localStorage.getItem('taobun_master_final_v7');
+      if (d) { var t = JSON.parse(d).theme; if (t) document.documentElement.setAttribute('data-theme', t); }
+      var d2 = localStorage.getItem('taobun_loyalty_v1');
+      if (!d && d2) { var t2 = JSON.parse(d2).theme; if (t2) document.documentElement.setAttribute('data-theme', t2); }
+    } catch(e) {}
+  })();
+</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TAOBUN">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #d61e30; 
+    --primary-light: #ffebed;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --border: #e9ecef;
+    --text: #1a1a2e;
+    --muted: #6c757d;
+    --success: #10b981;
+    --danger: #ef4444;
+    --radius: 24px;
+    --shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
+    --transition-smooth: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  [data-theme="dark"], html[data-theme="dark"] body {
+    --bg: #0f1115;
+    --card: #1a1d23;
+    --border: #2d3139;
+    --text: #f1f3f5;
+    --muted: #adb5bd;
+    --primary-light: rgba(214, 30, 48, 0.15);
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    transition: background 0.5s ease;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: contain;
+  }
+
+  .container { max-width: 500px; margin: 0 auto; padding-bottom: 40px; }
+  
+  /* ── VIEW TRANSITIONS ── */
+  .view-container { display: none; }
+  .view-active { 
+    display: block;
+    animation: viewEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes viewEnter {
+    from { opacity: 0; transform: translateY(24px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── STAGGERED CARD ENTRANCE ── */
+  @keyframes cardEnter {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.85); }
+    70%  { transform: scale(1.04); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .menu-grid .menu-card {
+    animation: cardEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .menu-grid .menu-card:nth-child(1) { animation-delay: 0.04s; }
+  .menu-grid .menu-card:nth-child(2) { animation-delay: 0.08s; }
+  .menu-grid .menu-card:nth-child(3) { animation-delay: 0.12s; }
+  .menu-grid .menu-card:nth-child(4) { animation-delay: 0.16s; }
+  .menu-grid .menu-card:nth-child(5) { animation-delay: 0.20s; }
+  .menu-grid .menu-card:nth-child(6) { animation-delay: 0.24s; }
+  .menu-grid .menu-card:nth-child(7) { animation-delay: 0.28s; }
+  .menu-grid .menu-card:nth-child(8) { animation-delay: 0.32s; }
+
+  .section-group {
+    animation: cardEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .section-group:nth-child(1) { animation-delay: 0.06s; }
+  .section-group:nth-child(2) { animation-delay: 0.12s; }
+  .section-group:nth-child(3) { animation-delay: 0.18s; }
+  .section-group:nth-child(4) { animation-delay: 0.24s; }
+
+  .chart-box {
+    animation: cardEnter 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
+  }
+
+  .badge {
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+  }
+  header h1 {
+    animation: cardEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.16s both;
+  }
+
+  /* Fade for overlays/modals */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* ── INPUT FOCUS SPRING ── */
+  input.nav-input { 
+    border: 1px solid transparent; background: var(--bg); padding: 8px 12px; 
+    border-radius: 12px; font-family: inherit; font-weight: 800; font-size: 15px; 
+    color: var(--text); width: 110px; text-align: right; outline: none; 
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  input.nav-input:focus { 
+    background: var(--card); border-color: var(--primary); 
+    box-shadow: 0 0 0 3px var(--primary-light);
+    transform: scale(1.02);
+  }
+
+  header.main-header { margin-bottom: 30px; position: relative; padding-top: 50px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+  .dashboard-title { font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--text); }
+  .dashboard-title span { color: var(--primary); }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--primary); background: var(--primary-light); padding: 8px 16px; border-radius: 100px; margin-bottom: 16px; border: 1px solid rgba(214, 30, 48, 0.1); }
+  h1 { font-size: 26px; font-weight: 800; line-height: 1.2; letter-spacing: -0.5px; text-align: center; }
+  h1 span { color: var(--primary); }
+
+  /* FIX: Theme Toggle Styling and Consistency */
+  .theme-toggle { background: var(--card); border: 1px solid var(--border); width: 44px; height: 44px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow); transition: var(--transition-smooth); position: relative; overflow: hidden; }
+  .theme-toggle svg { width: 20px; height: 20px; fill: none; stroke: var(--text); stroke-width: 2; position: absolute; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease; }
+  .sun { opacity: 1; transform: translateY(0) rotate(0deg); }
+  .moon { opacity: 0; transform: translateY(20px) rotate(45deg); }
+  [data-theme="dark"] .sun { opacity: 0; transform: translateY(-20px) rotate(-45deg); }
+  [data-theme="dark"] .moon { opacity: 1; transform: translateY(0) rotate(0deg); }
+  .theme-toggle:hover { transform: rotate(15deg) scale(1.08); }
+  .theme-toggle:active { transform: scale(0.92); }
+
+  .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+  .menu-card { 
+    background: var(--card); border: 1px solid var(--border); 
+    padding: 22px 18px 20px;
+    border-radius: var(--radius); cursor: pointer; 
+    display: flex; flex-direction: column; align-items: flex-start; gap: 14px; 
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.15s ease; 
+    box-shadow: var(--shadow);
+  }
+  .menu-card h3 { font-size: 14px; font-weight: 800; margin: 0; }
+  .menu-card .menu-sub { font-size: 10.5px; color: var(--muted); font-weight: 500; margin-top: 1px; line-height: 1.4; }
+  .menu-info { display: flex; flex-direction: column; }
+  .menu-card:hover { transform: translateY(-6px) scale(1.01); border-color: var(--primary); box-shadow: 0 20px 44px -8px rgba(214,30,48,0.18); }
+  .menu-card:active { transform: translateY(-2px) scale(0.985); transition-duration: 0.1s; }
+  .menu-card:hover .menu-icon { transform: scale(1.12) rotate(-4deg); }
+  
+  /* COMING SOON - dark/disabled look */
+  .menu-card.locked { 
+    cursor: not-allowed; 
+    background: color-mix(in srgb, var(--bg) 60%, var(--border) 40%);
+    border-color: transparent;
+    opacity: 0.5;
+    filter: grayscale(1) brightness(0.85);
+  }
+  .menu-card.locked:hover { transform: none; box-shadow: var(--shadow); }
+  .menu-card.locked:hover .menu-icon { transform: none; }
+  
+  .menu-icon { 
+    background: var(--primary-light); color: var(--primary); width: 54px; height: 54px; 
+    border-radius: 18px; display: flex; align-items: center; justify-content: center; 
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex-shrink: 0;
+  }
+  .menu-icon svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .menu-card h3 { font-size: 17px; font-weight: 700; }
+
+  .back-btn { 
+    background: var(--card); border: 1px solid var(--border); padding: 12px 22px; 
+    border-radius: 100px; font-weight: 700; font-size: 12px; cursor: pointer; 
+    color: var(--muted); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); min-height: 44px;
+  }
+  .back-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); transform: translateX(-3px); }
+  .back-btn:active { transform: translateX(-1px) scale(0.97); }
+
+  .hero-revenue { 
+    background: var(--primary); color: white; border-radius: var(--radius); 
+    padding: 35px 20px; text-align: center; margin-bottom: 20px; 
+    box-shadow: 0 20px 40px rgba(214, 30, 48, 0.2);
+    animation: cardEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+  }
+  .revenue-value { font-size: 38px; font-weight: 800; margin-top: 8px; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .hero-revenue:hover .revenue-value { transform: scale(1.04); }
+
+  .date-selector { display: flex; gap: 8px; margin-bottom: 20px; justify-content: center; align-items: flex-start; }
+  .custom-select-container { position: relative; width: 140px; }
+  .select-trigger { 
+    background: var(--card); border: 1px solid var(--border); color: var(--text); 
+    padding: 10px 16px; border-radius: 14px; font-weight: 700; font-size: 13px; cursor: pointer; 
+    display: flex; justify-content: space-between; align-items: center; 
+    transition: all 0.18s ease;
+  }
+  .select-trigger:hover { border-color: var(--primary); }
+  .select-trigger::after { content: ''; width: 8px; height: 8px; border-right: 2.5px solid var(--primary); border-bottom: 2.5px solid var(--primary); transform: rotate(45deg); transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); margin-bottom: 4px; }
+  .active .select-trigger::after { transform: rotate(-135deg); margin-bottom: -4px; }
+  .select-options { 
+    position: absolute; top: calc(100% + 8px); left: 0; width: 100%; 
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); z-index: 100; 
+    max-height: 0; overflow: hidden; 
+    transition: max-height 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1); 
+    opacity: 0; transform: translateY(-6px) scale(0.98);
+  }
+  .active .select-options { max-height: 220px; opacity: 1; overflow-y: auto; padding: 8px; transform: translateY(0) scale(1); }
+  .option-item { padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease; color: var(--text); }
+  .option-item:hover { background: var(--primary-light); color: var(--primary); transform: translateX(3px); }
+  .option-item:active { transform: translateX(1px) scale(0.98); }
+
+  .section-group { 
+    background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; 
+    border: 1px solid var(--border); box-shadow: var(--shadow); position: relative;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .section-group:hover { box-shadow: 0 14px 36px -6px rgba(0,0,0,0.08); }
+  .section-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; display: block; border-left: 3px solid var(--primary); padding-left: 10px; }
+  .deck-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); transition: padding-left 0.2s ease; }
+  .deck-item:last-child { border-bottom: none; }
+  .deck-item:hover { padding-left: 4px; }
+  .deck-title { font-size: 14px; font-weight: 700; }
+  .input-wrapper { display: flex; align-items: center; gap: 6px; }
+
+  .auto-val { font-weight: 800; font-size: 16px; color: var(--primary); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .unit { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+  .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .export-btn { width: 100%; background: var(--text); color: var(--card); border: none; padding: 20px; border-radius: 20px; font-weight: 800; cursor: pointer; transition: opacity 0.15s, transform 0.12s; font-size: 14px; text-transform: uppercase; }
+  .export-btn:hover { opacity: 0.88; }
+  .export-btn:active { transform: scale(0.98); }
+  .import-btn { width: 100%; background: var(--card); color: var(--text); border: 2px solid var(--border); padding: 20px; border-radius: 20px; font-weight: 800; cursor: pointer; transition: border-color 0.15s, transform 0.12s; font-size: 14px; text-transform: uppercase; }
+  .import-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .import-btn:active { transform: scale(0.98); }
+  .reset-btn { width: 100%; background: transparent; color: var(--muted); border: 2px dashed var(--border); padding: 14px; border-radius: 20px; font-weight: 700; font-size: 11px; cursor: pointer; margin-bottom: 16px; display: block; width: 100%; transition: border-color 0.15s, color 0.15s, transform 0.12s; }
+  .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .reset-btn:active { transform: scale(0.98); }
+
+  .insight-panel { background: var(--primary-light); border: 1px solid var(--primary); border-radius: 18px; padding: 16px; margin-bottom: 20px; font-size: 12px; color: var(--text); line-height: 1.5; display: none; }
+  .insight-panel b { color: var(--primary); display: block; margin-bottom: 4px; font-size: 13px; text-transform: uppercase; }
+
+  .slider-container { margin-top: 15px; }
+  input[type="range"] { width: 100%; height: 6px; background: var(--border); border-radius: 5px; outline: none; -webkit-appearance: none; cursor: pointer; }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; }
+
+  .chart-box { background: var(--card); border-radius: var(--radius); padding: 24px; margin-top: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); position: relative; }
+  .chart-title { font-size: 12px; font-weight: 800; text-align: center; margin-bottom: 20px; text-transform: uppercase; color: var(--muted); }
+  .chart-container { height: 260px; position: relative; }
+
+  .leads-results-container { background: var(--text); color: white; border-radius: var(--radius); padding: 24px; margin-top: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+  .funnel-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+  .funnel-item:last-child { border-bottom: none; }
+  .funnel-item span { font-size: 13px; font-weight: 600; }
+  .result-val { font-size: 16px; font-weight: 800; color: var(--primary); }
+  .overall-row { text-align: center; padding-top: 20px; border-top: 2px dashed rgba(255,255,255,0.1); margin-top: 10px; }
+  [data-theme="dark"] .leads-results-container { background: #000; }
+
+  /* ── GLOBAL STICKY THEME TOGGLE ── */
+  .global-theme-toggle {
+    position: fixed; top: 16px; right: 16px; z-index: 9000;
+    background: var(--card); border: 1px solid var(--border);
+    width: 44px; height: 44px; border-radius: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+    transition: var(--transition-smooth);
+    overflow: hidden;
+  }
+  .global-theme-toggle svg { width: 20px; height: 20px; fill: none; stroke: var(--text); stroke-width: 2; position: absolute; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease; }
+  .global-theme-toggle .sun { opacity: 1; transform: translateY(0) rotate(0deg); }
+  .global-theme-toggle .moon { opacity: 0; transform: translateY(20px) rotate(45deg); }
+  [data-theme="dark"] .global-theme-toggle .sun { opacity: 0; transform: translateY(-20px) rotate(-45deg); }
+  [data-theme="dark"] .global-theme-toggle .moon { opacity: 1; transform: translateY(0) rotate(0deg); }
+  /* Hide per-view toggles since we have global one now */
+  .view-theme-toggle { display: none !important; }
+  /* Sobun nav toggle: keep hidden too, global handles it */
+  .sobun-view-theme-toggle { display: none !important; }
+
+  /* ── JSON BACKUP BUTTON ── */
+  .backup-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .json-export-btn { width: 100%; background: var(--card); color: var(--success); border: 2px solid var(--success); padding: 14px; border-radius: 20px; font-weight: 800; cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.12s; font-size: 12px; text-transform: uppercase; opacity: 0.85; }
+  .json-export-btn:hover { background: var(--success); color: white; opacity: 1; }
+  .json-export-btn:active { transform: scale(0.98); }
+  .json-import-btn { width: 100%; background: var(--card); color: var(--muted); border: 2px dashed var(--border); padding: 14px; border-radius: 20px; font-weight: 800; cursor: pointer; transition: border-color 0.15s, color 0.15s, transform 0.12s; font-size: 12px; text-transform: uppercase; }
+  .json-import-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .json-import-btn:active { transform: scale(0.98); }
+
+  /* ── BACK BUTTON IMPROVEMENTS ── */
+  .back-btn { 
+    background: var(--card); border: 1px solid var(--border); 
+    padding: 12px 22px; border-radius: 100px; font-weight: 700; font-size: 12px; 
+    cursor: pointer; color: var(--muted); margin-bottom: 20px; display: inline-flex;
+    align-items: center; gap: 6px; transition: 0.3s; min-height: 44px;
+  }
+  .back-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
+
+  /* ── UTILITY CLASSES (replacing scattered inline styles) ── */
+  .color-primary { color: var(--primary); }
+  .color-muted { color: var(--muted); }
+  .fw-800 { font-weight: 800; }
+  .fs-14 { font-size: 14px; }
+  .mr-8 { margin-right: 8px; }
+  .deck-title-sub { color: var(--muted); font-size: 12px; font-weight: 700; }
+  .section-gradient { background: linear-gradient(145deg, var(--card), var(--bg)); border-top: 3px solid var(--primary); }
+  .auto-val-lg { font-size: 22px; }
+
+  /* ── BRANCH COMPARISON ── */
+  .branch-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .dot-perdos { background: #10b981; }
+  .branch-col.perdos  { border-top: 4px solid #10b981; }
+  .perdos .branch-field input:focus  { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+  .bc-val-perdos { font-weight: 800; color: #10b981; text-align: right; }
+  .winner-perdos { background: rgba(16,185,129,.12); color: #10b981; }
+  .branch-col { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .branch-col.raya  { border-top: 4px solid #6366f1; }
+  .branch-col.kemboja { border-top: 4px solid #f59e0b; }
+  .branch-col-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .branch-col-title .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot-raya    { background: #6366f1; }
+  .dot-kemboja { background: #f59e0b; }
+  .branch-input-row { display: flex; flex-direction: column; gap: 10px; }
+  .branch-field { display: flex; flex-direction: column; gap: 4px; }
+  .branch-field label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  .branch-field input {
+    border: 1px solid var(--border); background: var(--bg);
+    border-radius: 12px; padding: 9px 12px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 800;
+    color: var(--text); outline: none; width: 100%; text-align: right;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .branch-field input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+  .kemboja .branch-field input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.12); }
+  .branch-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .branch-stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 16px; box-shadow: var(--shadow); text-align: center; }
+  .branch-stat-card .bsc-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 8px; }
+  .branch-stat-card .bsc-val { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+  .branch-stat-card .bsc-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .branch-winner { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; margin-top: 6px; }
+  .winner-raya    { background: rgba(99,102,241,.12); color: #6366f1; }
+  .winner-kemboja { background: rgba(245,158,11,.12); color: #f59e0b; }
+  .winner-tie     { background: rgba(16,185,129,.1);  color: #10b981; }
+  .bc-compare-table { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 16px; }
+  .bc-compare-table table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .bc-compare-table thead { background: var(--bg); }
+  .bc-compare-table th { padding: 12px 16px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); text-align: left; }
+  .bc-compare-table td { padding: 13px 16px; border-top: 1px solid var(--border); vertical-align: middle; }
+  .bc-compare-table tr:hover td { background: rgba(99,102,241,.03); }
+  .bc-metric-name { font-weight: 700; font-size: 13px; }
+  .bc-val-raya    { font-weight: 800; color: #6366f1; text-align: right; }
+  .bc-val-kemboja { font-weight: 800; color: #f59e0b; text-align: right; }
+  .bc-val-delta   { font-size: 11px; font-weight: 700; text-align: right; }
+  .delta-pos { color: var(--success); }
+  .delta-neg { color: var(--danger); }
+  .delta-neu { color: var(--muted); }
+  .bc-chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  .bc-chart-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 16px; text-align: center; }
+  .bc-chart-container { height: 220px; position: relative; }
+  .bc-reset-btn { width: 100%; background: transparent; color: var(--muted); border: 2px dashed var(--border); padding: 14px; border-radius: 20px; font-weight: 700; font-size: 11px; cursor: pointer; transition: border-color 0.15s, color 0.15s, transform 0.12s; }
+  .bc-reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+  .bc-reset-btn:active { transform: scale(0.98); }
+  @media(max-width: 700px) { .branch-cols { grid-template-columns: 1fr; } .branch-result-grid { grid-template-columns: 1fr; } }
+
+  /* ── CHART DARK MODE POLISH ── */
+  [data-theme="dark"] .chart-box { border-color: var(--border); }
+
+  /* ── CUSTOM CONFIRM MODAL ── */
+  .confirm-overlay {
+    display: none; position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center; padding: 20px;
+    isolation: isolate;
+  }
+  .confirm-overlay.open { display: flex; animation: fadeIn .18s ease; }
+  .confirm-modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 24px; padding: 32px 28px; width: 100%; max-width: 360px;
+    box-shadow: 0 24px 48px -8px rgba(0,0,0,0.18);
+    animation: slideUp .28s cubic-bezier(0.34,1.56,0.64,1);
+    text-align: center;
+  }
+  .confirm-icon { font-size: 36px; margin-bottom: 14px; line-height: 1; }
+  .confirm-title { font-size: 17px; font-weight: 800; margin-bottom: 8px; letter-spacing: -.4px; }
+  .confirm-msg { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+  .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .confirm-cancel {
+    padding: 13px; border-radius: 14px; border: 1.5px solid var(--border);
+    background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px; font-weight: 800; cursor: pointer; transition: .2s;
+  }
+  .confirm-cancel:hover { border-color: var(--muted); }
+  .confirm-ok {
+    padding: 13px; border-radius: 14px; border: none;
+    background: var(--danger); color: white; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px; font-weight: 800; cursor: pointer; transition: .2s;
+    box-shadow: 0 4px 14px rgba(239,68,68,.3);
+  }
+  .confirm-ok:hover { opacity: .88; }
+
+  /* ── INPUT VALIDATION ── */
+  input.nav-input.input-error {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,.15) !important;
+    background: rgba(239,68,68,.05) !important;
+  }
+  .sobun-wrapper .ci.input-error {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 3px rgba(239,68,68,.15) !important;
+  }
+  .field-error-msg {
+    font-size: 10px; font-weight: 700; color: var(--danger);
+    display: none; white-space: nowrap;
+  }
+  .field-error-msg.show { display: inline-block; }
+
+  /* ── IMPORT LOADING OVERLAY ── */
+  .import-loading {
+    display: none; position: fixed; inset: 0; z-index: 18000;
+    background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+  }
+  .import-loading.show { display: flex; }
+  .import-spinner {
+    width: 48px; height: 48px; border: 4px solid rgba(255,255,255,.2);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  .import-loading-txt { color: white; font-size: 14px; font-weight: 700; letter-spacing: -.2px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── PROMO EMPTY STATE (no products loaded) ── */
+  .promo-no-products {
+    background: var(--primary-light); border: 1px dashed var(--primary);
+    border-radius: 14px; padding: 20px; text-align: center;
+    font-size: 12.5px; color: var(--primary); font-weight: 700;
+    margin-bottom: 14px; display: none;
+  }
+  .promo-no-products.show { display: block; }
+
+  .sobun-wrapper {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .sobun-wrapper .nav {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(15,17,21,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 12px; height: 52px;
+    transition: background 0.5s ease;
+    gap: 4px;
+    overflow: hidden;
+  }
+  [data-theme="light"] .sobun-wrapper .nav { background: rgba(248,249,250,0.92); }
+
+  /* Back to Suite button inside nav */
+  .sobun-back-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 0 10px; height: 32px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px; font-weight: 800;
+    cursor: pointer; white-space: nowrap;
+    flex-shrink: 0; margin-right: 4px;
+    transition: all 0.2s;
+    letter-spacing: -0.1px;
+    min-width: 44px; min-height: 32px;
+  }
+  .sobun-back-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); }
+  .sobun-back-btn svg { flex-shrink: 0; }
+  .sobun-wrapper .nav-brand {
+    font-size: 12px; font-weight: 800;
+    color: var(--primary); margin-right: 8px;
+    white-space: nowrap; flex-shrink: 0;
+    letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px;
+  }
+  .sobun-wrapper .nav-brand span { color: var(--muted); font-weight: 500; }
+  .sobun-wrapper .nav-tabs { 
+    display: flex; overflow-x: auto; flex: 1; 
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .sobun-wrapper .nav-tabs::-webkit-scrollbar { height: 0; }
+  .sobun-wrapper .nav-tab {
+    padding: 0 12px; height: 52px; line-height: 52px;
+    font-size: 12px; font-weight: 700;
+    color: var(--muted); cursor: pointer;
+    border: none; background: none;
+    border-bottom: 2.5px solid transparent;
+    white-space: nowrap;
+    transition: color .18s ease, border-color .18s ease, opacity .15s ease;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.1px;
+    position: relative;
+    scroll-snap-align: start;
+    min-width: 44px;
+    flex-shrink: 0;
+  }
+  .sobun-wrapper .nav-tab:hover { color: var(--text); }
+  .sobun-wrapper .nav-tab:active { opacity: 0.7; }
+  .sobun-wrapper .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* Mobile: hide brand name to save space, show only icon */
+  @media (max-width: 600px) {
+    .sobun-wrapper .nav-brand { display: none; }
+    .sobun-wrapper .nav { padding: 0 8px; gap: 2px; }
+    .sobun-back-btn { padding: 0 8px; font-size: 10px; }
+    .sobun-wrapper .nav-tab { padding: 0 10px; font-size: 11px; }
+    .btn-import-label { display: none; }
+    .sobun-wrapper .btn-import { padding: 0 10px; min-width: 36px; gap: 0; }
+    .sobun-wrapper .theme-toggle { width: 32px; height: 32px; margin-left: 4px; }
+  }
+  .sobun-wrapper .theme-toggle {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    width: 38px; height: 38px;
+    border-radius: 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow); transition: var(--transition-smooth);
+    position: relative; overflow: hidden;
+    margin-left: 12px; flex-shrink: 0;
+  }
+  .sobun-wrapper .theme-toggle svg {
+    width: 17px; height: 17px; fill: none; stroke: var(--text);
+    stroke-width: 2; position: absolute;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+  }
+  .sobun-wrapper .page { display: none; padding: 24px 0 60px; }
+  .sobun-wrapper .page.active {
+    display: block;
+    animation: viewEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .sobun-wrapper .ph { margin-bottom: 22px; animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both; }
+  .sobun-wrapper .ph-title { font-size: 19px; font-weight: 800; letter-spacing: -0.5px; }
+  .sobun-wrapper .ph-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .sobun-wrapper .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 18px;
+    box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05);
+    transition: box-shadow 0.22s ease, border-color 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .sobun-wrapper .card:hover {
+    box-shadow: 0 16px 38px -6px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+  .sobun-wrapper .card-title {
+    font-size: 10.5px; font-weight: 800; letter-spacing: .9px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 16px;
+    border-left: 3px solid var(--primary); padding-left: 9px;
+  }
+  .sobun-wrapper .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .sobun-wrapper .g3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .sobun-wrapper .g4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+  .sobun-wrapper .fx { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+  .sobun-wrapper .fx1 { flex: 1; min-width: 260px; }
+  .sobun-wrapper .mb8 { margin-bottom: 8px; }
+  .sobun-wrapper .mb14 { margin-bottom: 14px; }
+  .sobun-wrapper .mb20 { margin-bottom: 20px; }
+  .sobun-wrapper .sep { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .sobun-wrapper .stat { text-align: center; padding: 18px 10px; }
+  .sobun-wrapper .stat-v { font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .sobun-wrapper .stat:hover .stat-v { transform: scale(1.12); }
+  .sobun-wrapper .stat-l { font-size: 11px; color: var(--muted); margin-top: 6px; font-weight: 600; }
+  .sobun-wrapper .hero-banner {
+    background: var(--primary); border-radius: 20px;
+    padding: 28px 24px; margin-bottom: 20px;
+    box-shadow: 0 20px 40px rgba(214, 30, 48, 0.25);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+    animation: cardEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
+    transition: box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .sobun-wrapper .hero-banner:hover {
+    box-shadow: 0 28px 52px rgba(214, 30, 48, 0.32);
+    transform: translateY(-3px);
+  }
+  .sobun-wrapper .hero-banner-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1px; }
+  .sobun-wrapper .hero-banner-val { font-size: 36px; font-weight: 800; color: white; letter-spacing: -1.5px; margin-top: 4px; }
+  .sobun-wrapper .hero-banner-badge { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 100px; padding: 6px 14px; font-size: 12px; font-weight: 700; color: white; }
+  /* Tier Cards */
+  .sobun-wrapper .tc { border-radius: 10px; padding: 18px; border: 1px solid; transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease; }
+  .sobun-wrapper .tc:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 16px 36px -6px rgba(0,0,0,0.12); }
+  .sobun-wrapper .tc:hover { transform: translateY(-4px); }
+  .sobun-wrapper .tc-br { background: rgba(201,125,46,0.1); border-color: rgba(201,125,46,.22); }
+  .sobun-wrapper .tc-si { background: rgba(138,150,163,0.09); border-color: rgba(138,150,163,.2); }
+  .sobun-wrapper .tc-go { background: rgba(230,168,23,0.1); border-color: rgba(230,168,23,.22); }
+  .sobun-wrapper .tc-pl { background: rgba(96,165,250,0.09); border-color: rgba(96,165,250,.2); }
+  .sobun-wrapper .tc-ico { font-size: 20px; margin-bottom: 6px; line-height: 1; }
+  .sobun-wrapper .tc-name { font-size: 14px; font-weight: 800; margin-bottom: 1px; }
+  .sobun-wrapper .tc-sub { font-size: 10px; color: var(--muted); margin-bottom: 11px; }
+  .sobun-wrapper .tc-mult { font-size: 28px; font-weight: 500; line-height: 1; }
+  .sobun-wrapper .tc-ml { font-size: 10px; color: var(--muted); margin-bottom: 11px; margin-top: 1px; }
+  .sobun-wrapper .tc-rows { display: flex; flex-direction: column; gap: 5px; }
+  .sobun-wrapper .tc-row { display: flex; justify-content: space-between; font-size: 11px; }
+  .sobun-wrapper .tc-row span:first-child { color: var(--muted); }
+  .sobun-wrapper .tc-row span:last-child { font-weight: 700; font-size: 10.5px; }
+  /* Badges */
+  .sobun-wrapper .tbadge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .sobun-wrapper .tb-br { background: rgba(201,125,46,0.1); color: #c97d2e; border: 1px solid rgba(201,125,46,.25); }
+  .sobun-wrapper .tb-si { background: rgba(138,150,163,0.09); color: #8a96a3; border: 1px solid rgba(138,150,163,.2); }
+  .sobun-wrapper .tb-go { background: rgba(230,168,23,0.1); color: #e6a817; border: 1px solid rgba(230,168,23,.25); }
+  .sobun-wrapper .tb-pl { background: rgba(96,165,250,0.09); color: #60a5fa; border: 1px solid rgba(96,165,250,.2); }
+  /* Tables */
+  .sobun-wrapper .tw { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+  .sobun-wrapper .tw-nb { overflow-x: auto; }
+  .sobun-wrapper table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .sobun-wrapper thead { background: var(--bg); }
+  .sobun-wrapper th { padding: 10px 12px; text-align: left; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; white-space: nowrap; }
+  .sobun-wrapper td { padding: 10px 12px; border-top: 1px solid var(--border); vertical-align: middle; }
+  .sobun-wrapper tbody tr:hover td { background: rgba(214,30,48,.03); }
+  .sobun-wrapper .tr { text-align: right; }
+  .sobun-wrapper .tc2 { text-align: center; }
+  .sobun-wrapper .mono { font-size: 12px; }
+  /* Forms */
+  .sobun-wrapper .fg { display: flex; flex-direction: column; gap: 5px; margin-bottom: 11px; }
+  .sobun-wrapper .fg:last-child { margin-bottom: 0; }
+  .sobun-wrapper label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.3px; }
+  .sobun-wrapper input:not(.nav-input), .sobun-wrapper select {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 12px;
+    color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12.5px; outline: none;
+    transition: border-color .2s, box-shadow .2s; width: 100%;
+  }
+  .sobun-wrapper input:not(.nav-input):focus, .sobun-wrapper select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-light);
+  }
+  .sobun-wrapper input[readonly] { opacity: .4; cursor: not-allowed; }
+  .sobun-wrapper select {
+    cursor: pointer; -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+  /* Combobox */
+  .sobun-wrapper .cw { position: relative; }
+  .sobun-wrapper .ci {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 30px 9px 12px;
+    color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12.5px; outline: none;
+    transition: border-color .2s, box-shadow .2s; width: 100%; cursor: text;
+  }
+  .sobun-wrapper .ci:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+  .sobun-wrapper .ca { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 10px; }
+  .sobun-wrapper .cd {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    z-index: 999; background: var(--card);
+    border: 1px solid var(--border); border-radius: 14px;
+    max-height: 220px; overflow-y: auto; display: none;
+    box-shadow: 0 20px 40px -8px rgba(0,0,0,0.1);
+  }
+  .sobun-wrapper .cd.open { display: block; }
+  .sobun-wrapper .co { padding: 9px 12px; font-size: 12.5px; cursor: pointer; border-bottom: 1px solid var(--border); color: var(--text); transition: background .1s; }
+  .sobun-wrapper .co:last-child { border-bottom: none; }
+  .sobun-wrapper .co:hover, .sobun-wrapper .co.foc { background: var(--primary-light); color: var(--primary); }
+  .sobun-wrapper .co-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .sobun-wrapper .co-empty { padding: 12px; font-size: 12px; color: var(--muted); text-align: center; }
+  /* Status pills */
+  .sobun-wrapper .sp { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .sobun-wrapper .sp-am { background: rgba(16,185,129,.12); color: #10b981; }
+  .sobun-wrapper .sp-ti { background: rgba(245,158,11,.12); color: #f59e0b; }
+  .sobun-wrapper .sp-bo { background: rgba(239,68,68,.12); color: #ef4444; }
+  /* Filter pills */
+  .sobun-wrapper .fpr { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .sobun-wrapper .fp {
+    padding: 6px 14px; border-radius: 100px;
+    font-size: 11.5px; font-weight: 700; cursor: pointer;
+    border: 1px solid var(--border); background: var(--card); color: var(--muted);
+    transition: var(--transition-smooth); font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .sobun-wrapper .fp:hover { color: var(--text); border-color: var(--border); }
+  .sobun-wrapper .fp.active { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+  /* Search */
+  .sobun-wrapper .sw { position: relative; margin-bottom: 14px; }
+  .sobun-wrapper .sw input { padding-left: 36px; }
+  .sobun-wrapper .si { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+  /* Buttons */
+  .sobun-wrapper .btn {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 10px 18px; border-radius: 10px;
+    border: none; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 12.5px; font-weight: 800; transition: opacity .15s, transform .1s;
+    width: 100%; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .sobun-wrapper .btn:active { transform: scale(.98); }
+  .sobun-wrapper .btn-p { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(214,30,48,.3); }
+  .sobun-wrapper .btn-p:hover { opacity: .88; }
+  .sobun-wrapper .btn-del { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; opacity: .5; padding: 2px 6px; transition: opacity .15s; }
+  .sobun-wrapper .btn-del:hover { opacity: 1; }
+  /* Calc Result */
+  .sobun-wrapper .cr { background: var(--bg); border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
+  .sobun-wrapper .cr-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 12.5px; border-bottom: 1px solid var(--border); }
+  .sobun-wrapper .cr-row:last-child { border: none; font-weight: 700; font-size: 13px; padding-top: 8px; }
+  /* Tag */
+  .sobun-wrapper .tag { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; }
+  .sobun-wrapper .tag-a { background: rgba(16,185,129,.12); color: #10b981; }
+  .sobun-wrapper .tag-b { background: rgba(214,30,48,.1); color: var(--primary); }
+  .sobun-wrapper .tag-np { background: rgba(0,0,0,.05); color: var(--muted); }
+  [data-theme="dark"] .sobun-wrapper .tag-np { background: rgba(255,255,255,.05); }
+  /* Flow */
+  .sobun-wrapper .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 2px 0; }
+  .sobun-wrapper .fn { padding: 10px 14px; border-radius: 10px; font-size: 11.5px; font-weight: 700; border: 1px solid; text-align: center; min-width: 96px; }
+  .sobun-wrapper .fa { color: var(--muted); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1.4; }
+  .sobun-wrapper .fa-u { font-size: 10px; color: #10b981; }
+  .sobun-wrapper .fa-d { font-size: 10px; color: #ef4444; }
+  /* Empty */
+  .sobun-wrapper .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .sobun-wrapper .empty-ico { font-size: 30px; margin-bottom: 8px; opacity: .35; }
+  /* Promo panel */
+  .sobun-wrapper .promo-panel { min-width: 290px; max-width: 310px; flex-shrink: 0; }
+  /* Save dot */
+  .save-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); display: inline-block; margin-left: 8px; opacity: 0; transition: opacity 0.3s; }
+  .save-dot.visible { opacity: 1; animation: pulse-dot 1.5s ease-in-out; }
+  @keyframes pulse-dot { 0%,100%{opacity:0} 30%,70%{opacity:1} }
+  @keyframes valuePop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  .value-pop { animation: valuePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  /* Import button */
+  .sobun-wrapper .btn-import {
+    display: flex; align-items: center; justify-content: center;
+    gap: 7px; padding: 0 14px; height: 34px; border-radius: 10px;
+    border: 1.5px solid rgba(214,30,48,0.22); background: var(--primary-light);
+    color: var(--primary); cursor: pointer;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 800;
+    white-space: nowrap; flex-shrink: 0; margin-left: 8px; transition: var(--transition-smooth);
+  }
+  .sobun-wrapper .btn-import:hover { background: var(--primary); color: white; }
+  .sobun-wrapper .btn-import svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  /* Modal */
+  .xl-overlay { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 20px; }
+  .xl-overlay.open { display: flex; animation: fadeIn .2s ease; }
+  .xl-modal { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 28px; width: 100%; max-width: 480px; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.1); animation: slideUp .3s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes slideUp { from{transform:translateY(20px) scale(.98);opacity:0} to{transform:none;opacity:1} }
+  .xl-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; letter-spacing: -.4px; }
+  .xl-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .xl-drop { border: 2px dashed var(--border); border-radius: 14px; padding: 32px 20px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s; margin-bottom: 16px; position: relative; }
+  .xl-drop:hover, .xl-drop.drag { border-color: var(--primary); background: var(--primary-light); }
+  .xl-drop input[type="file"] { position: absolute; inset:0; opacity:0; cursor:pointer; }
+  .xl-drop-ico { font-size: 28px; margin-bottom: 8px; }
+  .xl-drop-txt { font-size: 13px; font-weight: 700; color: var(--text); }
+  .xl-drop-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .xl-progress { display: none; margin-bottom: 14px; }
+  .xl-progress.show { display: block; }
+  .xl-prog-bar { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+  .xl-prog-fill { height: 100%; background: var(--primary); border-radius: 4px; transition: width .3s; }
+  .xl-prog-txt { font-size: 11px; color: var(--muted); }
+  .xl-preview { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 11.5px; margin-bottom: 16px; display: none; max-height: 180px; overflow-y: auto; }
+  .xl-preview.show { display: block; }
+  .xl-prow { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .xl-prow:last-child { border: none; }
+  .xl-prow span:first-child { color: var(--muted); }
+  .xl-prow span:last-child { font-weight: 700; font-size: 11px; color: var(--primary); }
+  .xl-err { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: #ef4444; border-radius: 10px; padding: 10px 13px; font-size: 12px; margin-bottom: 14px; display: none; }
+  .xl-err.show { display: block; }
+  .xl-actions { display: flex; gap: 10px; }
+  .xl-btn { flex: 1; padding: 11px; border-radius: 10px; border: none; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12.5px; font-weight: 800; transition: opacity .15s, transform .1s; text-transform: uppercase; letter-spacing: .3px; }
+  .xl-btn:active { transform: scale(.98); }
+  .xl-btn-cancel { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .xl-btn-apply { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(214,30,48,.3); }
+  .xl-btn-apply:disabled { opacity: .4; cursor: not-allowed; }
+  .xl-btn-apply:not(:disabled):hover { opacity: .88; }
+  .xl-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card); border: 1px solid var(--border); border-radius: 100px; padding: 10px 20px; font-size: 12.5px; font-weight: 700; box-shadow: 0 20px 40px -8px rgba(0,0,0,0.1); z-index: 10000; opacity: 0; transition: opacity .3s, transform .3s; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+  .xl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  @media(max-width:900px){ .sobun-wrapper .g4{grid-template-columns:1fr 1fr} .sobun-wrapper .g3{grid-template-columns:1fr 1fr} }
+  @media(max-width:600px){ .sobun-wrapper .g2,.sobun-wrapper .g3,.sobun-wrapper .g4{grid-template-columns:1fr} .sobun-wrapper .promo-panel{max-width:100%} .sobun-wrapper .hero-banner{flex-direction:column;gap:10px} }
+
+</style>
+</head>
+<body>
+
+<!-- Global sticky theme toggle — single instance for entire app -->
+<button class="global-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme" id="globalThemeToggle">
+  <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+  <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+</button>
+
+<div class="container">
+  <div id="home-view" class="view-container view-active">
+    <header class="main-header">
+      <div style="position: absolute; right: 0; top: 0;">
+          <button class="theme-toggle view-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+            <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </button>
+      </div>
+      <div class="badge">CV. Roti Semua Generasi</div>
+      <h1>WELCOME TO<br><span>TAOBUN</span> MANAGEMENT SUITE</h1>
+    </header>
+    <div class="menu-grid">
+      <div class="menu-card" onclick="showView('revenue-view')">
+        <div class="menu-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+        <div class="menu-info"><h3>Revenue</h3><span class="menu-sub">Dashboard & Simulasi</span></div>
+      </div>
+      <div class="menu-card" onclick="showView('leads-view')">
+        <div class="menu-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div class="menu-info"><h3>Lead</h3><span class="menu-sub">Konversi Funnel</span></div>
+      </div>
+      <div class="menu-card" onclick="showView('branch-view')">
+        <div class="menu-icon" style="background: rgba(99,102,241,0.1); color: #6366f1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div>
+        <div class="menu-info"><h3>Rev. Comparison</h3><span class="menu-sub">Komparasi Revenue Cabang</span></div>
+      </div>
+      <div class="menu-card" onclick="showView('sobun-view')">
+        <div class="menu-icon" style="background: rgba(230,168,23,0.12); color: #e6a817;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+        <div class="menu-info"><h3>Sobat Taobun</h3><span class="menu-sub">Loyalty & Promo</span></div>
+      </div>
+      <div class="menu-card locked">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+        <div class="menu-info"><h3>Coming Soon</h3><span class="menu-sub">Segera hadir</span></div>
+      </div>
+      <div class="menu-card locked">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 20v-10M15 20v-2M6 20v-4M18 20V4"></path></svg></div>
+        <div class="menu-info"><h3>Coming Soon</h3><span class="menu-sub">Segera hadir</span></div>
+      </div>
+      <div class="menu-card locked">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+        <div class="menu-info"><h3>Coming Soon</h3><span class="menu-sub">Segera hadir</span></div>
+      </div>
+      <div class="menu-card locked">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.5 8.5 0 0 1 4.6 1.3L21 3.5v8z"></path></svg></div>
+        <div class="menu-info"><h3>Coming Soon</h3><span class="menu-sub">Segera hadir</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="revenue-view" class="view-container">
+    <div class="dashboard-header">
+        <div class="dashboard-title"><span>TAOBUN</span> Management Suite</div>
+        <button class="theme-toggle view-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+            <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+    </div>
+    <button class="back-btn" onclick="showView('home-view')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      Back to Suite
+    </button>
+
+    <div id="insightPanel" class="insight-panel"></div>
+    <div class="hero-revenue"><p class="revenue-label">Actual Monthly Revenue</p><div class="revenue-value" id="totalRevenue">Rp 0</div></div>
+
+    <div class="date-selector">
+      <div class="custom-select-container" id="containerMonthRev">
+        <div class="select-trigger" onclick="toggleDropdown('containerMonthRev')"><span id="selectedMonthRev">Februari</span></div>
+        <div class="select-options month-options-list"></div>
+      </div>
+      <div class="custom-select-container" id="containerYearRev">
+        <div class="select-trigger" onclick="toggleDropdown('containerYearRev')"><span id="selectedYearRev">2026</span></div>
+        <div class="select-options year-options-list"></div>
+      </div>
+    </div>
+
+    <div class="section-group">
+      <span class="section-label">Market Performance</span>
+      <div class="deck-item"><div class="deck-title">Potential Leads</div><div class="input-wrapper"><input type="text" id="leads" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"><span class="field-error-msg" id="err-leads"></span></div></div>
+      <div class="deck-item"><div class="deck-title">Target Rate</div><div class="input-wrapper"><input type="text" id="convTargetInput" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"><span class="unit">%</span></div></div>
+      <div class="deck-item"><div class="deck-title">Active Customers</div><div class="input-wrapper"><input type="text" id="totalCustInput" class="nav-input color-primary" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title deck-title-sub">↳ Actual Conv.</div><div class="auto-val" id="actualConvDisplay" style="font-size: 14px;">0%</div></div>
+      <div class="deck-item">
+        <div class="deck-title deck-title-sub">↳ New / Retained</div>
+        <div class="input-wrapper"><span id="newCustDisplay" class="fw-800 fs-14 mr-8">0</span><span class="unit">/</span><input type="text" id="retentionCust" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)" style="width: 75px; font-size: 14px;"></div>
+      </div>
+    </div>
+
+    <div class="section-group">
+      <span class="section-label">Average Values</span>
+      <div class="deck-item"><div class="deck-title">Basket Size</div><div class="input-wrapper"><span class="unit">Rp</span><input type="text" id="basketSize" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">Avg Tx / Month</div><div class="input-wrapper"><input type="text" id="avgTx" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"><span class="unit">x</span></div></div>
+    </div>
+
+    <div class="section-group section-gradient">
+      <span class="section-label">Strategic Simulation</span>
+      <div class="deck-item"><div class="deck-title">Growth Ambition</div><div class="input-wrapper"><input type="text" id="optPercent" class="nav-input color-primary" value="0" oninput="syncSlider(this.value)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"><span class="unit">%</span></div></div>
+      <div class="slider-container"><input type="range" id="growthSlider" min="0" max="100" value="0" oninput="syncInput(this.value)"></div>
+      <div class="deck-item" style="margin-top:10px"><div class="deck-title">Projected Revenue</div><div class="auto-val auto-val-lg" id="projectedRevenueDisplay">Rp 0</div></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetMetrics()">Reset Field Data</button>
+    <div class="btn-group">
+        <button class="import-btn" onclick="document.getElementById('fileInput').click()">Import Data</button>
+        <button class="export-btn" onclick="exportToExcel()">Export Report</button>
+    </div>
+    <div class="backup-btn-group">
+        <button class="json-export-btn" onclick="exportJSON()">⬇ Backup JSON</button>
+        <button class="json-import-btn" onclick="document.getElementById('jsonFileInput').click()">⬆ Restore JSON</button>
+    </div>
+    <input type="file" id="fileInput" style="display:none" accept=".xlsx" onchange="importFromExcel(this)">
+    <input type="file" id="jsonFileInput" style="display:none" accept=".json" onchange="importFromJSON(this)">
+
+    <div class="chart-box"><p class="chart-title">Customer Funnel Analysis</p><div class="chart-container"><canvas id="funnelChart"></canvas></div></div>
+    <div class="chart-box"><p class="chart-title">Revenue Target Comparison</p><div class="chart-container"><canvas id="growthChart"></canvas></div></div>
+  </div>
+
+  <div id="leads-view" class="view-container">
+    <div class="dashboard-header">
+        <div class="dashboard-title"><span>LEAD</span> Conversion Analysis</div>
+        <button class="theme-toggle view-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+            <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+    </div>
+    <button class="back-btn" onclick="showView('home-view')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      Back to Suite
+    </button>
+
+    <div class="date-selector">
+      <div class="custom-select-container" id="containerMonthLead">
+        <div class="select-trigger" onclick="toggleDropdown('containerMonthLead')"><span id="selectedMonthLead">Februari</span></div>
+        <div class="select-options month-options-list"></div>
+      </div>
+      <div class="custom-select-container" id="containerYearLead">
+        <div class="select-trigger" onclick="toggleDropdown('containerYearLead')"><span id="selectedYearLead">2026</span></div>
+        <div class="select-options year-options-list"></div>
+      </div>
+    </div>
+
+    <div class="section-group">
+      <span class="section-label">Funnel Metrics</span>
+      <div class="deck-item"><div class="deck-title">Reach / Impressions</div><div class="input-wrapper"><input type="text" id="reach" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">Profile Visits</div><div class="input-wrapper"><input type="text" id="visits" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">External Link Clicks</div><div class="input-wrapper"><input type="text" id="links" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">ESB Order Clicks</div><div class="input-wrapper"><input type="text" id="orders" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">Success Payments</div><div class="input-wrapper"><input type="text" id="payments" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetLeadMetrics()">Reset Funnel Data</button>
+
+    <div class="leads-results-container" id="leads-results">
+        <p style="text-align: center; color: var(--muted);">Lengkapi data di atas.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ BRANCH COMPARISON VIEW ═══════════════════════════════ -->
+  <div id="branch-view" class="view-container">
+    <div class="dashboard-header">
+      <div class="dashboard-title"><span>BRANCH</span> Comparison</div>
+    </div>
+    <button class="back-btn" onclick="showView('home-view')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      Back to Suite
+    </button>
+
+    <!-- Date selector (shared) -->
+    <div class="date-selector">
+      <div class="custom-select-container" id="containerMonthBranch">
+        <div class="select-trigger" onclick="toggleDropdown('containerMonthBranch')"><span id="selectedMonthBranch">Februari</span></div>
+        <div class="select-options month-options-list"></div>
+      </div>
+      <div class="custom-select-container" id="containerYearBranch">
+        <div class="select-trigger" onclick="toggleDropdown('containerYearBranch')"><span id="selectedYearBranch">2026</span></div>
+        <div class="select-options year-options-list"></div>
+      </div>
+    </div>
+
+    <!-- Input panels side by side -->
+    <div class="branch-cols">
+      <div class="branch-col raya">
+        <div class="branch-col-title"><span class="dot dot-raya"></span>Taobun Raya</div>
+        <div class="branch-input-row">
+          <div class="branch-field"><label>Revenue (Rp)</label><input type="text" id="br-raya-rev"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Active Customers</label><input type="text" id="br-raya-cust"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Transactions</label><input type="text" id="br-raya-tx"    value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Avg Basket (Rp)</label><input type="text" id="br-raya-basket" value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>New Customers</label><input type="text" id="br-raya-new"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>COGS / HPP (Rp)</label><input type="text" id="br-raya-cogs"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="branch-col kemboja">
+        <div class="branch-col-title"><span class="dot dot-kemboja"></span>Taobun Kemboja</div>
+        <div class="branch-input-row">
+          <div class="branch-field"><label>Revenue (Rp)</label><input type="text" id="br-kemb-rev"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Active Customers</label><input type="text" id="br-kemb-cust"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Transactions</label><input type="text" id="br-kemb-tx"    value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Avg Basket (Rp)</label><input type="text" id="br-kemb-basket" value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>New Customers</label><input type="text" id="br-kemb-new"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>COGS / HPP (Rp)</label><input type="text" id="br-kemb-cogs"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="branch-col perdos">
+        <div class="branch-col-title"><span class="dot dot-perdos"></span>Taobun Perdos</div>
+        <div class="branch-input-row">
+          <div class="branch-field"><label>Revenue (Rp)</label><input type="text" id="br-perd-rev"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Active Customers</label><input type="text" id="br-perd-cust"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Transactions</label><input type="text" id="br-perd-tx"    value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Avg Basket (Rp)</label><input type="text" id="br-perd-basket" value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>New Customers</label><input type="text" id="br-perd-new"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>COGS / HPP (Rp)</label><input type="text" id="br-perd-cogs"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero KPI summary cards -->
+    <div class="branch-result-grid" id="bc-kpi-grid">
+      <div class="branch-stat-card">
+        <div class="bsc-label">Total Revenue</div>
+        <div class="bsc-val" id="bc-total-rev">Rp 0</div>
+        <div class="bsc-sub">Gabungan 3 cabang</div>
+      </div>
+      <div class="branch-stat-card">
+        <div class="bsc-label">Revenue Leader</div>
+        <div class="bsc-val" id="bc-rev-leader">—</div>
+        <div class="bsc-sub" id="bc-rev-diff">—</div>
+      </div>
+      <div class="branch-stat-card">
+        <div class="bsc-label">Gross Margin Leader</div>
+        <div class="bsc-val" id="bc-gm-leader">—</div>
+        <div class="bsc-sub" id="bc-gm-diff">—</div>
+      </div>
+      <div class="branch-stat-card">
+        <div class="bsc-label">Total Customers</div>
+        <div class="bsc-val" id="bc-total-cust">0</div>
+        <div class="bsc-sub">Gabungan 3 cabang</div>
+      </div>
+    </div>
+
+    <!-- Side-by-side metric table -->
+    <div class="bc-compare-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Metrik</th>
+            <th style="color:#6366f1">🟣 Raya</th>
+            <th style="color:#f59e0b">🟡 Kemboja</th>
+            <th style="color:#10b981">🟢 Perdos</th>
+            <th>Unggul</th>
+          </tr>
+        </thead>
+        <tbody id="bc-table-body">
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Isi data di atas untuk melihat perbandingan</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Chart -->
+    <div class="bc-chart-wrap">
+      <div class="bc-chart-title">Revenue & Gross Profit — Raya vs Kemboja vs Perdos</div>
+      <div class="bc-chart-container"><canvas id="bcChart"></canvas></div>
+    </div>
+
+    <button class="bc-reset-btn" onclick="bcReset()">Reset Data Branch</button>
+  </div>
+
+</div><!-- end .container -->
+
+<div id="sobun-view" class="view-container">
+
+    <div class="sobun-wrapper">
+      <!-- NAV — integrated back btn, tabs, theme toggle, import -->
+      <nav class="nav">
+        <button class="sobun-back-btn" onclick="showView('home-view')" title="Back to Suite">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Suite
+        </button>
+        <div class="nav-brand">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          Sobat TaoBun </span>
+          <span class="save-dot" id="saveDot"></span>
+        </div>
+        <div class="nav-tabs">
+          <button class="nav-tab active" onclick="sbGoto('dashboard',this)">Dashboard</button>
+          <button class="nav-tab" onclick="sbGoto('master',this)">Master Produk</button>
+          <button class="nav-tab" onclick="sbGoto('tiering',this)">Tiering</button>
+          <button class="nav-tab" onclick="sbGoto('profit',this)">Profitabilitas</button>
+          <button class="nav-tab" onclick="sbGoto('reward',this)">Reward</button>
+          <button class="nav-tab" onclick="sbGoto('promo',this)">Simulasi Promo</button>
+        </div>
+        <button class="btn-import" onclick="xlOpen()" title="Import data dari Excel SKEMA_SOBAT_TAOBUN.xlsx">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="btn-import-label">Import Excel</span>
+        </button>
+        <button class="theme-toggle sobun-view-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme" style="margin-left:4px;flex-shrink:0;">
+          <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </nav>
+
+      <!-- DASHBOARD -->
+      <div id="sb-page-dashboard" class="page active">
+        <div class="ph"><div class="ph-title">Dashboard</div><div class="ph-sub">TaoBun Loyalty Program</div></div>
+        <div class="hero-banner mb20">
+          <div><div class="hero-banner-title">Total Produk Terdaftar</div><div class="hero-banner-val" id="hero-total-prod">64</div></div>
+          <div style="text-align:right"><div class="hero-banner-badge">4 Tier Level Aktif</div></div>
+        </div>
+        <div class="g4 mb20">
+          <div class="card stat"><div class="stat-v" style="color:var(--primary)" id="stat-total-prod">64</div><div class="stat-l">Total Produk</div></div>
+          <div class="card stat"><div class="stat-v" style="color:#e6a817">4</div><div class="stat-l">Tier Level</div></div>
+          <div class="card stat"><div class="stat-v" style="color:var(--success);font-size:20px">Rp2.000</div><div class="stat-l">Belanja → 1 Poin</div></div>
+          <div class="card stat"><div class="stat-v" style="color:var(--success);font-size:20px">Rp20</div><div class="stat-l">Nilai Tukar 1 Poin</div></div>
+        </div>
+        <div class="fx mb20">
+          <div class="fx1">
+            <div class="g2">
+              <div class="tc tc-br"><div class="tc-ico">🥉</div><div class="tc-name" style="color:#c97d2e">Bronze Bun</div><div class="tc-sub">Entry Level</div><div class="tc-mult" style="color:#c97d2e">1×</div><div class="tc-ml">Poin Multiplier</div><div class="tc-rows"><div class="tc-row"><span>Naik ke Silver</span><span>≥ Rp250rb/thn</span></div><div class="tc-row"><span>Stay</span><span>Otomatis</span></div></div></div>
+              <div class="tc tc-si"><div class="tc-ico">🥈</div><div class="tc-name" style="color:#8a96a3">Silver Bun</div><div class="tc-sub">Active</div><div class="tc-mult" style="color:#8a96a3">1.2×</div><div class="tc-ml">Poin Multiplier</div><div class="tc-rows"><div class="tc-row"><span>Naik ke Gold</span><span>≥ Rp600rb/thn</span></div><div class="tc-row"><span>Stay Silver</span><span>Rp300rb/thn</span></div></div></div>
+              <div class="tc tc-go"><div class="tc-ico">🥇</div><div class="tc-name" style="color:#e6a817">Gold Bun</div><div class="tc-sub">Loyal</div><div class="tc-mult" style="color:#e6a817">1.5×</div><div class="tc-ml">Poin Multiplier</div><div class="tc-rows"><div class="tc-row"><span>Naik ke Platinum</span><span>≥ Rp1,5jt/thn</span></div><div class="tc-row"><span>Stay Gold</span><span>Rp750rb/thn</span></div></div></div>
+              <div class="tc tc-pl"><div class="tc-ico">💎</div><div class="tc-name" style="color:#60a5fa">Platinum Bun</div><div class="tc-sub">VIP</div><div class="tc-mult" style="color:#60a5fa">2×</div><div class="tc-ml">Poin Multiplier</div><div class="tc-rows"><div class="tc-row"><span>Stay Platinum</span><span>Rp1,8jt/thn</span></div><div class="tc-row"><span>Turun jika</span><span>< Rp1,8jt</span></div></div></div>
+            </div>
+          </div>
+          <div class="card" style="min-width:270px;max-width:290px;flex-shrink:0;">
+            <div class="card-title">Kalkulator Poin</div>
+            <div class="fg"><label>Jumlah Belanja</label><input type="text" id="qc-b" placeholder="Rp 0" oninput="qcFmt(this);qc();sbSave()"></div>
+            <div class="fg"><label>Tier Member</label>
+              <select id="qc-t" onchange="qc();sbSave()">
+                <option value="1">🥉 Bronze (1×)</option>
+                <option value="1.2">🥈 Silver (1.2×)</option>
+                <option value="1.5">🥇 Gold (1.5×)</option>
+                <option value="2">💎 Platinum (2×)</option>
+              </select>
+            </div>
+            <div class="cr" id="qc-res" style="display:none">
+              <div class="cr-row"><span>Poin Dasar</span><span class="mono" id="qc-base">—</span></div>
+              <div class="cr-row"><span>Multiplier</span><span class="mono" id="qc-mult">—</span></div>
+              <div class="cr-row"><span>Total Poin</span><span class="mono" id="qc-tot" style="color:var(--primary)">—</span></div>
+              <div class="cr-row"><span>Nilai Poin</span><span class="mono" id="qc-val" style="color:var(--success)">—</span></div>
+              <div class="cr-row"><span>Cost of Loyalty</span><span class="mono" id="qc-col">—</span></div>
+            </div>
+            <div id="qc-ph" style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0">Masukkan jumlah belanja</div>
+          </div>
+        </div>
+        <div class="card mb20">
+          <div class="card-title">Alur Naik & Turun Tier — Evaluasi Akhir Tahun</div>
+          <div class="flow">
+            <div class="fn tc-br" style="color:#c97d2e"><div>🥉 Bronze</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Entry</div></div>
+            <div class="fa"><div class="fa-u">≥ Rp250rb ↗</div><span>→</span><div class="fa-d">— tetap</div></div>
+            <div class="fn tc-si" style="color:#8a96a3"><div>🥈 Silver</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Stay ≥ 300rb</div></div>
+            <div class="fa"><div class="fa-u">≥ Rp600rb ↗</div><span>→</span><div class="fa-d">↙ &lt;300rb</div></div>
+            <div class="fn tc-go" style="color:#e6a817"><div>🥇 Gold</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Stay ≥ 750rb</div></div>
+            <div class="fa"><div class="fa-u">≥ Rp1,5jt ↗</div><span>→</span><div class="fa-d">↙ &lt;750rb</div></div>
+            <div class="fn tc-pl" style="color:#60a5fa"><div>💎 Platinum</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Stay ≥ 1,8jt</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MASTER PRODUK -->
+      <div id="sb-page-master" class="page">
+        <div class="ph"><div class="ph-title">Master Produk</div><div class="ph-sub">64 produk — HPP, harga jual, margin, status redeem</div></div>
+        <div class="sw"><span class="si">🔍</span><input type="text" id="mp-q" placeholder="Cari nama produk..." oninput="renderMaster()"></div>
+        <div class="fpr" id="mp-fpr">
+          <button class="fp active" data-f="semua" onclick="mpFilter(this)">Semua</button>
+          <button class="fp" data-f="Pareto A" onclick="mpFilter(this)">⭐ Pareto A</button>
+          <button class="fp" data-f="Pareto B" onclick="mpFilter(this)">Pareto B</button>
+          <button class="fp" data-f="Non-Pareto" onclick="mpFilter(this)">Non-Pareto</button>
+          <button class="fp" data-f="bisa" onclick="mpFilter(this)">✅ Bisa Redeem</button>
+          <button class="fp" data-f="tidak" onclick="mpFilter(this)">❌ Tidak Bisa</button>
+        </div>
+        <div class="tw mb8"><table>
+          <thead><tr><th>#</th><th>Nama Produk</th><th class="tr">HPP</th><th class="tr">Harga Jual</th><th class="tr">Gross Margin</th><th class="tr">GM %</th><th class="tc2">Pareto</th><th class="tr">Min. Poin</th><th>Redeem</th></tr></thead>
+          <tbody id="master-tb"></tbody>
+        </table></div>
+        <div id="mp-count" style="text-align:right;font-size:11px;color:var(--muted)"></div>
+      </div>
+
+      <!-- TIERING -->
+      <div id="sb-page-tiering" class="page">
+        <div class="ph"><div class="ph-title">Skema Tiering</div><div class="ph-sub">Parameter sistem poin dan simulasi cost of loyalty</div></div>
+        <div class="fx mb20">
+          <div class="card" style="min-width:255px;max-width:270px;flex-shrink:0;">
+            <div class="card-title">Parameter Sistem</div>
+            <div class="fg"><label>Belanja → 1 Poin (Rp)</label><input type="text" id="t-bp" value="Rp 2.000" oninput="rpFmt(this);calcT();sbSave()"></div>
+            <div class="fg"><label>Nilai Tukar 1 Poin (Rp)</label><input type="text" id="t-np" value="Rp 20" oninput="rpFmt(this);calcT();sbSave()"></div>
+            <div class="fg"><label>Simulasi Average Struk (Rp)</label><input type="text" id="t-avg" placeholder="Rp 0" oninput="rpFmt(this);calcT();sbSave()"></div>
+          </div>
+          <div class="fx1 card">
+            <div class="card-title">Cost of Loyalty per Tier</div>
+            <div class="tw-nb"><table>
+              <thead><tr><th>Tier</th><th class="tr">Poin Didapat</th><th class="tr">Nilai Poin</th><th class="tr">Cost of Loyalty</th></tr></thead>
+              <tbody id="t-sim-tb"></tbody>
+            </table></div>
+          </div>
+        </div>
+        <div class="g4">
+          <div class="tc tc-br"><div class="tc-ico">🥉</div><div class="tc-name" style="color:#c97d2e">Bronze Bun</div><div class="tc-sub">1× Multiplier</div><div class="tc-rows" id="tci-bronze"></div></div>
+          <div class="tc tc-si"><div class="tc-ico">🥈</div><div class="tc-name" style="color:#8a96a3">Silver Bun</div><div class="tc-sub">1.2× Multiplier</div><div class="tc-rows" id="tci-silver"></div></div>
+          <div class="tc tc-go"><div class="tc-ico">🥇</div><div class="tc-name" style="color:#e6a817">Gold Bun</div><div class="tc-sub">1.5× Multiplier</div><div class="tc-rows" id="tci-gold"></div></div>
+          <div class="tc tc-pl"><div class="tc-ico">💎</div><div class="tc-name" style="color:#60a5fa">Platinum Bun</div><div class="tc-sub">2× Multiplier</div><div class="tc-rows" id="tci-platinum"></div></div>
+        </div>
+      </div>
+
+      <!-- PROFITABILITAS -->
+      <div id="sb-page-profit" class="page">
+        <div class="ph"><div class="ph-title">Simulasi Profitabilitas</div><div class="ph-sub">Gross margin final per tier setelah dikurangi biaya poin</div></div>
+        <div class="fx">
+          <div class="card" style="min-width:255px;max-width:270px;flex-shrink:0;">
+            <div class="card-title">Parameter</div>
+            <div class="fg"><label>Asumsi HPP (%)</label><input type="number" id="p-hpp" value="36.55" step="0.01" oninput="calcP();sbSave()"></div>
+            <div class="fg"><label>Belanja → 1 Poin (Rp)</label><input type="text" id="p-bp" value="Rp 2.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <div class="fg"><label>Nilai 1 Poin (Rp)</label><input type="text" id="p-np" value="Rp 20" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <hr class="sep">
+            <div style="font-size:10.5px;font-weight:800;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.7px">Avg Struk per Tier</div>
+            <div class="fg"><label>🥉 Bronze</label><input type="text" id="p-abr" value="Rp 25.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <div class="fg"><label>🥈 Silver</label><input type="text" id="p-asi" value="Rp 35.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <div class="fg"><label>🥇 Gold</label><input type="text" id="p-ago" value="Rp 50.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <div class="fg"><label>💎 Platinum</label><input type="text" id="p-apl" value="Rp 75.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+          </div>
+          <div class="fx1">
+            <div class="card mb14">
+              <div class="card-title">Gross Margin per Tier</div>
+              <div class="tw-nb"><table>
+                <thead><tr><th>Tier</th><th class="tr">Avg Struk</th><th class="tr">Est. HPP</th><th class="tr">GM Awal</th><th class="tr">Biaya Poin</th><th class="tr">GM Final</th><th class="tr">GM %</th><th>Status</th></tr></thead>
+                <tbody id="profit-tb"></tbody>
+              </table></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Aturan Baku Margin</div>
+              <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sp sp-am">✅ AMAN</span> Gross Margin ≥ 45%</div>
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sp sp-ti">⚠️ MENIPIS</span> 38%–44%</div>
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sp sp-bo">🔴 BONCOS</span> &lt;38%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REWARD -->
+      <div id="sb-page-reward" class="page">
+        <div class="ph"><div class="ph-title">Reward Berjenjang</div><div class="ph-sub">Katalog reward per tier — integrasi skema poin</div></div>
+        <div class="fpr" id="rw-fpr">
+          <button class="fp active" data-f="semua" onclick="rwFilter(this)">Semua</button>
+          <button class="fp" data-f="bronze" onclick="rwFilter(this)">🥉 Bronze</button>
+          <button class="fp" data-f="silver" onclick="rwFilter(this)">🥈 Silver</button>
+          <button class="fp" data-f="gold" onclick="rwFilter(this)">🥇 Gold</button>
+          <button class="fp" data-f="platinum" onclick="rwFilter(this)">💎 Platinum</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Tier</th><th>Nama Program</th><th>Item Reward</th><th class="tr">Harga Jual</th><th class="tr">HPP</th><th class="tr">GM%</th><th class="tr">Poin</th><th class="tr">Belanja Efektif</th><th class="tr">Rasio vs STAY</th><th>Keterangan</th></tr></thead>
+          <tbody id="rw-tb"></tbody>
+        </table></div>
+      </div>
+
+      <!-- SIMULASI PROMO -->
+      <div id="sb-page-promo" class="page">
+        <div class="ph"><div class="ph-title">Simulasi Promo & Misi</div><div class="ph-sub">Uji kelayakan promo sebelum dijalankan</div></div>
+        <div class="fx mb20">
+          <div class="card promo-panel">
+            <div class="card-title">Buat Simulasi Baru</div>
+            <div class="fg"><label>Nama Program</label><input type="text" id="pr-nm" placeholder="contoh: FREE MATCHA WEEKEND"></div>
+            <div class="fg">
+              <label>Pilih Produk</label>
+              <div class="promo-no-products" id="promo-no-products-banner">
+                ⚠️ Belum ada data produk. Import Excel dulu via tombol <b>Import Excel</b> di nav bar atas.
+              </div>
+              <div class="cw" id="cw">
+                <input type="text" class="ci" id="pr-inp" placeholder="Ketik nama produk..." oninput="cbFilter()" onclick="cbOpen()" onkeydown="cbKey(event)" autocomplete="off">
+                <span class="ca">▾</span>
+                <div class="cd" id="cb-dd"></div>
+              </div>
+              <input type="hidden" id="pr-val">
+            </div>
+            <div class="g2" style="gap:10px">
+              <div class="fg" style="margin:0"><label>Harga Jual</label><input type="text" id="pr-hj" readonly placeholder="Rp —"></div>
+              <div class="fg" style="margin:0"><label>HPP</label><input type="text" id="pr-hpp" readonly placeholder="Rp —"></div>
+            </div>
+            <div class="fg" style="margin-top:11px"><label>Qty Item (Pcs)</label><input type="number" id="pr-qty" value="1" min="1" oninput="preLive()"></div>
+            <div class="fg"><label>Tipe Promo</label>
+              <select id="pr-tipe" onchange="prTipe();preLive()">
+                <option value="gratis">🎁 Gratis (Redeem Poin)</option>
+                <option value="drp">💸 Diskon Nominal (Rp)</option>
+                <option value="dpct">📉 Diskon Persen (%)</option>
+              </select>
+            </div>
+            <div class="fg" id="pr-dw" style="display:none">
+              <label id="pr-dl">Nominal Diskon (Rp)</label>
+              <input type="text" id="pr-dis" oninput="preLive()">
+            </div>
+            <div class="fg"><label>Min. Transaksi (Rp)</label><input type="text" id="pr-mt" placeholder="Rp 0" oninput="rpFmt(this);preLive()"></div>
+            <div id="pr-prev" style="display:none">
+              <hr class="sep" style="margin:12px 0">
+              <div style="font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Preview Kalkulasi</div>
+              <div class="cr">
+                <div class="cr-row"><span>HPP Total</span><span class="mono" id="pv-hpp">—</span></div>
+                <div class="cr-row"><span>Revenue</span><span class="mono" id="pv-rev">—</span></div>
+                <div class="cr-row"><span>Net Margin</span><span class="mono" id="pv-net">—</span></div>
+                <div class="cr-row"><span>Gross Margin</span><span class="mono" id="pv-gm">—</span></div>
+                <div class="cr-row"><span>Status</span><span id="pv-st">—</span></div>
+              </div>
+            </div>
+            <button class="btn btn-p" onclick="addPromo()">+ Tambah ke Simulasi</button>
+          </div>
+          <div class="fx1">
+            <div id="pr-empty" class="empty"><div class="empty-ico">📋</div><div>Belum ada simulasi promo.</div><div style="font-size:11px;margin-top:3px">Buat dari panel kiri.</div></div>
+            <div id="pr-tw" style="display:none">
+              <div class="tw"><table>
+                <thead><tr><th>#</th><th>Program</th><th>Produk</th><th class="tc2">Qty</th><th>Tipe</th><th class="tr">HPP Total</th><th class="tr">Revenue</th><th class="tr">Net Margin</th><th class="tr">GM%</th><th>Status</th><th></th></tr></thead>
+                <tbody id="pr-tb"></tbody>
+              </table></div>
+            </div>
+          </div>
+        </div>
+    </div><!-- end sobun-wrapper -->
+</div><!-- end sobun-view -->
+
+<!-- IMPORT EXCEL MODAL (Sobun) -->
+<div class="xl-overlay" id="xl-overlay" onclick="xlOverlayClick(event)">
+    <div class="xl-modal">
+      <div class="xl-title">📥 Import dari Excel</div>
+      <div class="xl-sub">Upload file <strong>SKEMA_SOBAT_TAOBUN.xlsx</strong> untuk memperbarui data Master Produk, Reward, dan parameter sistem secara otomatis.</div>
+      <div class="xl-drop" id="xl-drop" ondragover="xlDrag(event,true)" ondragleave="xlDrag(event,false)" ondrop="xlDropFile(event)">
+        <input type="file" accept=".xlsx,.xls" onchange="xlFileInput(event)">
+        <div class="xl-drop-ico">📊</div>
+        <div class="xl-drop-txt" id="xl-drop-txt">Klik atau drag & drop file Excel di sini</div>
+        <div class="xl-drop-sub">.xlsx / .xls — SKEMA_SOBAT_TAOBUN.xlsx</div>
+      </div>
+      <div class="xl-progress" id="xl-progress">
+        <div class="xl-prog-bar"><div class="xl-prog-fill" id="xl-prog-fill" style="width:0%"></div></div>
+        <div class="xl-prog-txt" id="xl-prog-txt">Membaca file...</div>
+      </div>
+      <div class="xl-err" id="xl-err"></div>
+      <div class="xl-preview" id="xl-preview">
+        <div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Preview Data yang Akan Diupdate</div>
+        <div id="xl-preview-rows"></div>
+      </div>
+      <div class="xl-actions">
+        <button class="xl-btn xl-btn-cancel" onclick="xlClose()">Batal</button>
+        <button class="xl-btn xl-btn-apply" id="xl-apply-btn" disabled onclick="xlApply()">Terapkan Update</button>
+      </div>
+    </div>
+</div>
+<div class="xl-toast" id="xl-toast"></div>
+
+<!-- Import Loading Overlay -->
+<div class="import-loading" id="importLoading">
+  <div class="import-spinner"></div>
+  <div class="import-loading-txt" id="importLoadingTxt">Memproses data...</div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONSTANTS — single source of truth
+// ═══════════════════════════════════════════
+const LS_KEY_REV    = 'taobun_master_final_v7';
+const LS_KEY_SOBUN  = 'taobun_loyalty_v1';
+const APP_NAME      = 'TAOBUN Management Suite';
+
+if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+  Chart.register(ChartDataLabels);
+}
+let funnelChart, growthChart;
+let currentMonth = "02", currentYear = "2026";
+const months = [
+    {v: '01', l: 'Januari'}, {v: '02', l: 'Februari'}, {v: '03', l: 'Maret'},
+    {v: '04', l: 'April'}, {v: '05', l: 'Mei'}, {v: '06', l: 'Juni'},
+    {v: '07', l: 'Juli'}, {v: '08', l: 'Agustus'}, {v: '09', l: 'September'},
+    {v: '10', l: 'Oktober'}, {v: '11', l: 'November'}, {v: '12', l: 'Desember'}
+];
+
+// ═══════════════════════════════════════════
+// CUSTOM CONFIRM DIALOG (callback-based, no async/await)
+// ═══════════════════════════════════════════
+let _confirmCallback = null;
+
+function showConfirm({ icon = '⚠️', title, msg, okLabel = 'Lanjutkan' } = {}, callback) {
+    _confirmCallback = callback || null;
+    const el = document.getElementById('confirmOverlay');
+    document.getElementById('confirmIcon').textContent  = icon;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent   = msg;
+    document.getElementById('confirmOkBtn').textContent = okLabel;
+    // Move to body root to escape any stacking context from parent elements
+    document.body.appendChild(el);
+    el.classList.add('open');
+}
+function confirmResolve(result) {
+    const el = document.getElementById('confirmOverlay');
+    el.classList.remove('open');
+    if (_confirmCallback) {
+        const cb = _confirmCallback;
+        _confirmCallback = null;
+        if (result) cb();
+    }
+}
+
+// ═══════════════════════════════════════════
+// INPUT VALIDATION
+// ═══════════════════════════════════════════
+function validateInput(el, opts = {}) {
+    const { min = 0, max = Infinity, required = false } = opts;
+    const val = cleanNumber(el.value);
+    let err = '';
+    if (required && (!el.value || el.value === '0')) err = 'Field ini wajib diisi.';
+    else if (val < min) err = `Nilai minimal ${min.toLocaleString('id-ID')}.`;
+    else if (val > max) err = `Nilai maksimal ${max.toLocaleString('id-ID')}.`;
+
+    const errEl = el.parentElement?.querySelector('.field-error-msg') ||
+                  el.closest('.deck-item')?.querySelector('.field-error-msg');
+    if (err) {
+        el.classList.add('input-error');
+        if (errEl) { errEl.textContent = err; errEl.classList.add('show'); }
+        return false;
+    } else {
+        el.classList.remove('input-error');
+        if (errEl) errEl.classList.remove('show');
+        return true;
+    }
+}
+function clearValidation(el) {
+    el.classList.remove('input-error');
+    const errEl = el.parentElement?.querySelector('.field-error-msg') ||
+                  el.closest('.deck-item')?.querySelector('.field-error-msg');
+    if (errEl) errEl.classList.remove('show');
+}
+
+// ═══════════════════════════════════════════
+// IMPORT LOADING HELPER
+// ═══════════════════════════════════════════
+function showImportLoading(msg = 'Memproses data...') {
+    document.getElementById('importLoadingTxt').textContent = msg;
+    document.getElementById('importLoading').classList.add('show');
+}
+function hideImportLoading() {
+    document.getElementById('importLoading').classList.remove('show');
+}
+
+function formatNumber(val) {
+  let clean = val.toString().replace(/[^0-9]/g, "");
+  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+function cleanNumber(val) { return parseFloat(val.toString().replace(/\./g, "")) || 0; }
+function formatShortNumber(num) {
+  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'M';
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'Jt';
+  return num.toLocaleString('id-ID');
+}
+
+function clearIfZero(el) { if (el.value === "0") el.value = ""; }
+function restoreIfEmpty(el) {
+  if (el.value === "") {
+    el.value = "0";
+    // Only call the relevant calculation
+    if (el.classList.contains('lead-field')) { calculateLeads(); }
+    else { calculate(); }
+  }
+}
+
+function showView(id) {
+    document.querySelectorAll('.view-container').forEach(v => v.classList.remove('view-active'));
+    const target = document.getElementById(id);
+    if (target) target.classList.add('view-active');
+    // Re-render active sobun tab when entering sobun-view
+    if (id === 'sobun-view') {
+        const activeTab = document.querySelector('.sobun-wrapper .page.active');
+        if (activeTab) {
+            const tabId = activeTab.id.replace('sb-page-', '');
+            if (tabId === 'master')    renderMaster();
+            else if (tabId === 'reward')    renderRw();
+            else if (tabId === 'dashboard') initDash();
+            else if (tabId === 'tiering')   calcT();
+            else if (tabId === 'profit')    calcP();
+            else if (tabId === 'promo')     cbRender();
+        }
+    }
+    if (id === 'branch-view') bcCalculate();
+}
+
+// ── Chart color helper — reads current theme ──
+function getChartColors() {
+    const isDark = document.body.getAttribute('data-theme') === 'dark';
+    return {
+        neutral: isDark ? '#3d4149' : '#e9ecef',
+        dark:    isDark ? '#f1f3f5' : '#1a1a2e',
+        gridColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+        tickColor: isDark ? '#adb5bd' : '#6c757d',
+    };
+}
+function updateChartTheme() {
+    const c = getChartColors();
+    if (funnelChart) {
+        funnelChart.data.datasets[0].backgroundColor = [c.neutral, '#d61e30', c.dark];
+        funnelChart.options.scales.x = funnelChart.options.scales.x || {};
+        funnelChart.options.scales.x.ticks = { color: c.tickColor };
+        funnelChart.options.scales.x.grid  = { color: c.gridColor };
+        funnelChart.options.scales.y = funnelChart.options.scales.y || {};
+        funnelChart.options.scales.y.ticks = { color: c.tickColor };
+        funnelChart.update();
+    }
+    if (growthChart) {
+        growthChart.data.datasets[0].backgroundColor = [c.dark, '#d61e30'];
+        growthChart.options.scales.y.ticks.color = c.tickColor;
+        growthChart.options.scales.y.grid = { color: c.gridColor };
+        growthChart.options.plugins.datalabels.color = c.tickColor;
+        growthChart.update();
+    }
+}
+
+function toggleTheme() {
+    const current = document.body.getAttribute('data-theme') || document.documentElement.getAttribute('data-theme') || 'light';
+    const t = current === 'light' ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', t);
+    document.documentElement.setAttribute('data-theme', t);
+    updateChartTheme();
+    saveData();
+}
+
+// ── JSON Backup / Restore ──
+function exportJSON() {
+    try {
+        const revData = localStorage.getItem(LS_KEY_REV);
+        const sobunData = localStorage.getItem(LS_KEY_SOBUN);
+        const backup = {
+            _meta: { version: 1, exported: new Date().toISOString(), app: APP_NAME },
+            revenue: revData ? JSON.parse(revData) : null,
+            sobun: sobunData ? JSON.parse(sobunData) : null,
+            branch: (() => { try { const b = localStorage.getItem(LS_KEY_BRANCH); return b ? JSON.parse(b) : null; } catch(e) { return null; } })()
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const d = new Date(); 
+        a.download = `taobun_backup_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        xlToast('✅ Backup JSON berhasil diunduh!');
+    } catch(e) { xlToast('⚠️ Gagal export backup: ' + e.message); }
+}
+
+function importFromJSON(input) {
+    const file = input.files[0];
+    if (!file) return;
+    showImportLoading('Memverifikasi backup...');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const backup = JSON.parse(e.target.result);
+            if (!backup._meta || backup._meta.app !== APP_NAME) {
+                hideImportLoading();
+                xlToast('⚠️ File bukan backup TAOBUN yang valid.');
+                return;
+            }
+            showImportLoading('Mengembalikan data...');
+            if (backup.revenue) localStorage.setItem(LS_KEY_REV, JSON.stringify(backup.revenue));
+            if (backup.sobun) localStorage.setItem(LS_KEY_SOBUN, JSON.stringify(backup.sobun));
+            if (backup.branch) localStorage.setItem(LS_KEY_BRANCH, JSON.stringify(backup.branch));
+            xlToast('✅ Data berhasil di-restore! Memuat ulang...');
+            setTimeout(() => location.reload(), 1800);
+        } catch(e) {
+            hideImportLoading();
+            xlToast('⚠️ File JSON tidak valid: ' + e.message);
+        }
+    };
+    reader.onerror = () => { hideImportLoading(); xlToast('⚠️ Gagal membaca file.'); };
+    reader.readAsText(file);
+    input.value = '';
+}
+
+function toggleDropdown(id) {
+    const el = document.getElementById(id);
+    const wasActive = el.classList.contains('active');
+    document.querySelectorAll('.custom-select-container').forEach(c => c.classList.remove('active'));
+    if (!wasActive) el.classList.add('active');
+}
+
+function selectOption(type, value, label) {
+    if (type === 'Month') { 
+        currentMonth = value; 
+        document.querySelectorAll('[id^="selectedMonth"]').forEach(el => el.textContent = label);
+    } else { 
+        currentYear = value; 
+        document.querySelectorAll('[id^="selectedYear"]').forEach(el => el.textContent = value);
+    }
+    document.querySelectorAll('.custom-select-container').forEach(c => c.classList.remove('active'));
+    calculate();
+    calculateLeads();
+}
+
+function handleInput(el) {
+  let cursor = el.selectionStart, oldLen = el.value.length;
+  el.value = formatNumber(el.value);
+  el.setSelectionRange(cursor + (el.value.length - oldLen), cursor + (el.value.length - oldLen));
+  clearValidation(el);
+  calculate();
+}
+
+function handleLeadInput(el) {
+  el.value = formatNumber(el.value);
+  clearValidation(el);
+  calculateLeads();
+}
+function syncSlider(val) { document.getElementById('growthSlider').value = cleanNumber(val); calculate(); }
+function syncInput(val) { document.getElementById('optPercent').value = formatNumber(val); calculate(); }
+
+// ── Micro-animation helper ──
+function animateEl(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('value-pop');
+  void el.offsetWidth; // reflow to restart animation
+  el.classList.add('value-pop');
+}
+
+function calculate() {
+  const leads = cleanNumber(document.getElementById('leads').value);
+  const convTarget = cleanNumber(document.getElementById('convTargetInput').value);
+  const cust = cleanNumber(document.getElementById('totalCustInput').value);
+  const ret = cleanNumber(document.getElementById('retentionCust').value);
+  const basket = cleanNumber(document.getElementById('basketSize').value);
+  const avgTx = cleanNumber(document.getElementById('avgTx').value);
+  const opt = cleanNumber(document.getElementById('optPercent').value);
+  
+  const actualConv = leads > 0 ? (cust / leads * 100).toFixed(1) : 0;
+  const newCust = Math.max(0, cust - ret);
+  
+  document.getElementById('actualConvDisplay').textContent = actualConv + '%';
+  document.getElementById('newCustDisplay').textContent = formatNumber(Math.round(newCust));
+
+  const currentRev = cust * avgTx * basket;
+  const optRev = currentRev * Math.pow(1 + (opt/100), 3);
+  
+  document.getElementById('totalRevenue').textContent = 'Rp ' + currentRev.toLocaleString('id-ID');
+  document.getElementById('projectedRevenueDisplay').textContent = 'Rp ' + optRev.toLocaleString('id-ID');
+  animateEl('totalRevenue');
+  animateEl('projectedRevenueDisplay');
+
+  const panel = document.getElementById('insightPanel');
+  if (leads > 0 && parseFloat(actualConv) < convTarget) {
+      panel.innerHTML = `<b>💡 Business Insight:</b> Konversi (${actualConv}%) di bawah target (${convTarget}%).`;
+      panel.style.display = 'block';
+  } else { panel.style.display = 'none'; }
+
+  if (funnelChart) { funnelChart.data.datasets[0].data = [leads, cust, cust * avgTx]; funnelChart.update(); }
+  if (growthChart) { growthChart.data.datasets[0].data = [currentRev, optRev]; growthChart.update(); }
+  saveData();
+}
+
+function calculateLeads() {
+    const reach = cleanNumber(document.getElementById('reach').value);
+    const visits = cleanNumber(document.getElementById('visits').value);
+    const links = cleanNumber(document.getElementById('links').value);
+    const orders = cleanNumber(document.getElementById('orders').value);
+    const payments = cleanNumber(document.getElementById('payments').value);
+    const res = document.getElementById('leads-results');
+
+    if (reach > 0) {
+        const r2v = ((visits/reach)*100).toFixed(2);
+        const v2l = visits > 0 ? ((links/visits)*100).toFixed(2) : 0;
+        const l2o = links > 0 ? ((orders/links)*100).toFixed(2) : 0;
+        const o2p = orders > 0 ? ((payments/orders)*100).toFixed(2) : 0;
+        const ovr = ((payments/reach)*100).toFixed(2);
+
+        res.innerHTML = `
+            <div class="funnel-item"><span>Reach → Visit</span><span class="result-val">${r2v}%</span></div>
+            <div class="funnel-item"><span>Visit → Link</span><span class="result-val">${v2l}%</span></div>
+            <div class="funnel-item"><span>Link → Order</span><span class="result-val">${l2o}%</span></div>
+            <div class="funnel-item"><span>Order → Pay</span><span class="result-val">${o2p}%</span></div>
+            <div class="overall-row"><small>OVERALL CONV.</small><div style="font-size:32px; font-weight:900;">${ovr}%</div></div>`;
+    } else {
+        res.innerHTML = `<p style="text-align: center; color: var(--muted);">Lengkapi data di atas.</p>`;
+    }
+}
+
+function exportToExcel() {
+    const data = [
+        ["REPORT TAOBUN", `${currentMonth}/${currentYear}`],
+        ["Metric", "Value"],
+        ["Potential Leads", cleanNumber(document.getElementById('leads').value)],
+        ["Active Customers", cleanNumber(document.getElementById('totalCustInput').value)],
+        ["Basket Size", cleanNumber(document.getElementById('basketSize').value)],
+        ["Total Revenue", cleanNumber(document.getElementById('totalRevenue').textContent)],
+        ["Projected Revenue", cleanNumber(document.getElementById('projectedRevenueDisplay').textContent)]
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Report");
+    XLSX.writeFile(wb, `Report_Taobun_${currentMonth}_${currentYear}.xlsx`);
+}
+
+function importFromExcel(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (!file.name.match(/\.xlsx?$/i)) { xlToast('⚠️ File harus berformat .xlsx atau .xls'); input.value = ''; return; }
+    showImportLoading('Membaca file Excel...');
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            showImportLoading('Parsing data...');
+            const data = new Uint8Array(e.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            const fieldMap = {
+                'Potential Leads': 'leads', 'Active Customers': 'totalCustInput',
+                'Basket Size': 'basketSize', 'Avg Tx': 'avgTx',
+                'Target Rate': 'convTargetInput', 'Retention': 'retentionCust'
+            };
+            let updated = 0;
+            rows.forEach(row => {
+                const label = String(row[0] || '').trim();
+                const val = row[1];
+                if (fieldMap[label] && val !== '') {
+                    const el = document.getElementById(fieldMap[label]);
+                    if (el) { el.value = formatNumber(String(Math.round(Number(val)))); updated++; }
+                }
+            });
+            hideImportLoading();
+            if (updated > 0) {
+                calculate(); saveData();
+                xlToast(`✅ ${updated} field berhasil di-import dari Excel!`);
+            } else {
+                xlToast('⚠️ Tidak ada kolom yang cocok. Pastikan kolom A berisi nama field, kolom B berisi nilainya.');
+            }
+        } catch (err) {
+            hideImportLoading();
+            xlToast('⚠️ Gagal membaca file: ' + err.message);
+        }
+        input.value = '';
+    };
+    reader.onerror = () => { hideImportLoading(); xlToast('⚠️ Gagal membaca file.'); };
+    reader.readAsArrayBuffer(file);
+}
+
+function initCharts() {
+  if (typeof Chart === 'undefined') return;
+  const c = getChartColors();
+  funnelChart = new Chart(document.getElementById('funnelChart'), {
+    type: 'bar',
+    data: { labels: ['Leads', 'Users', 'Orders'], datasets: [{ data: [0,0,0], backgroundColor: [c.neutral, '#d61e30', c.dark], borderRadius: 10 }] },
+    options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: {display: false}, datalabels: { display: false } },
+        scales: {
+            x: { ticks: { color: c.tickColor }, grid: { color: c.gridColor } },
+            y: { ticks: { color: c.tickColor }, grid: { color: c.gridColor } }
+        }
+    }
+  });
+  
+  growthChart = new Chart(document.getElementById('growthChart'), {
+    type: 'bar',
+    data: { labels: ['Current', 'Target'], datasets: [{ data: [0,0], backgroundColor: [c.dark, '#d61e30'], borderRadius: 12 }] },
+    options: { 
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 30 } }, 
+        plugins: {
+            legend: {display: false},
+            datalabels: { anchor: 'end', align: 'top', offset: 5, color: c.tickColor, font: {weight: '800'}, formatter: (v) => 'Rp' + formatShortNumber(v) }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { color: c.tickColor, callback: function(value) { return 'Rp' + formatShortNumber(value); } },
+                grid: { color: c.gridColor }
+            }
+        }
+    }
+  });
+}
+
+function saveData() {
+    const data = { 
+        l: document.getElementById('leads').value, 
+        c: document.getElementById('convTargetInput').value, 
+        t: document.getElementById('totalCustInput').value, 
+        r: document.getElementById('retentionCust').value, 
+        b: document.getElementById('basketSize').value, 
+        tx: document.getElementById('avgTx').value, 
+        o: document.getElementById('optPercent').value,
+        lead_reach: document.getElementById('reach').value,
+        lead_visits: document.getElementById('visits').value,
+        lead_links: document.getElementById('links').value,
+        lead_orders: document.getElementById('orders').value,
+        lead_payments: document.getElementById('payments').value,
+        month: currentMonth,
+        year: currentYear,
+        theme: document.body.getAttribute('data-theme') 
+    };
+    localStorage.setItem(LS_KEY_REV, JSON.stringify(data));
+}
+
+function loadData() {
+    const saved = localStorage.getItem(LS_KEY_REV);
+    if (saved) {
+        const d = JSON.parse(saved);
+        document.getElementById('leads').value = d.l || "0";
+        document.getElementById('convTargetInput').value = d.c || "0";
+        document.getElementById('totalCustInput').value = d.t || "0";
+        document.getElementById('retentionCust').value = d.r || "0";
+        document.getElementById('basketSize').value = d.b || "0";
+        document.getElementById('avgTx').value = d.tx || "0";
+        document.getElementById('optPercent').value = d.o || "0";
+        document.getElementById('reach').value = d.lead_reach || "0";
+        document.getElementById('visits').value = d.lead_visits || "0";
+        document.getElementById('links').value = d.lead_links || "0";
+        document.getElementById('orders').value = d.lead_orders || "0";
+        document.getElementById('payments').value = d.lead_payments || "0";
+        document.getElementById('growthSlider').value = cleanNumber(d.o) || 0;
+        // Restore month/year selection
+        if (d.month) {
+            currentMonth = d.month;
+            const mLabel = months.find(m => m.v === d.month)?.l || d.month;
+            document.querySelectorAll('[id^="selectedMonth"]').forEach(el => el.textContent = mLabel);
+        }
+        if (d.year) {
+            currentYear = d.year;
+            document.querySelectorAll('[id^="selectedYear"]').forEach(el => el.textContent = d.year);
+        }
+        if (d.theme) {
+            document.body.setAttribute('data-theme', d.theme);
+            document.documentElement.setAttribute('data-theme', d.theme);
+        }
+        calculate();
+        calculateLeads();
+    }
+}
+
+function resetMetrics() {
+    showConfirm({
+        icon: '🗑️', title: 'Reset Revenue Data?',
+        msg: 'Semua data di Revenue Dashboard akan dikosongkan.',
+        okLabel: 'Reset'
+    }, function() {
+        const ids = ['leads', 'convTargetInput', 'totalCustInput', 'retentionCust', 'basketSize', 'avgTx', 'optPercent'];
+        ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
+        document.getElementById('growthSlider').value = 0;
+        document.querySelectorAll('.nav-input').forEach(el => clearValidation(el));
+        saveData();
+        calculate();
+        xlToast('✅ Data Revenue berhasil direset.');
+    });
+}
+
+function resetLeadMetrics() {
+    showConfirm({
+        icon: '🗑️', title: 'Reset Funnel Data?',
+        msg: 'Semua data funnel di Lead Management akan dikosongkan.',
+        okLabel: 'Reset'
+    }, function() {
+        const ids = ['reach', 'visits', 'links', 'orders', 'payments'];
+        ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = '0'; });
+        document.querySelectorAll('.lead-field').forEach(el => clearValidation(el));
+        saveData();
+        calculateLeads();
+        xlToast('✅ Data Funnel berhasil direset.');
+    });
+}
+
+/* =============================================
+   SOBAT TAOBUN — JAVASCRIPT
+   ============================================= */
+const SB_P = [
+  {n:'ES KOPI KEMBOJA',hpp:9352,hj:25000,gm:15648,gmp:.62592,par:'Non-Pareto',red:'BISA',poin:470,mt:30000},
+  {n:'HOT KOPI KEMBOJA',hpp:9138,hj:23000,gm:13862,gmp:.6027,par:'Non-Pareto',red:'BISA',poin:460,mt:29000},
+  {n:'ICE AMERICANO',hpp:5992,hj:22000,gm:16008,gmp:.7276,par:'Pareto A',red:'BISA',poin:300,mt:19000},
+  {n:'HOT AMERICANO',hpp:6094,hj:20000,gm:13906,gmp:.6953,par:'Non-Pareto',red:'BISA',poin:305,mt:20000},
+  {n:'ICE KOPI KEMUNING',hpp:6994,hj:23000,gm:16006,gmp:.6959,par:'Non-Pareto',red:'BISA',poin:350,mt:23000},
+  {n:'HOT KEMUNING',hpp:7168,hj:20000,gm:12832,gmp:.6416,par:'Non-Pareto',red:'BISA',poin:360,mt:23000},
+  {n:'ICE COFFEE LATTE',hpp:5630,hj:23000,gm:17370,gmp:.7552,par:'Non-Pareto',red:'BISA',poin:285,mt:18000},
+  {n:'HOT COFFEE LATTE',hpp:7693,hj:20000,gm:12307,gmp:.6154,par:'Non-Pareto',red:'BISA',poin:385,mt:25000},
+  {n:'ICE AMERICANO AREN',hpp:7862,hj:22000,gm:14138,gmp:.6426,par:'Non-Pareto',red:'BISA',poin:395,mt:25000},
+  {n:'CARAMEL MACCHIATO',hpp:10072,hj:28000,gm:17928,gmp:.6403,par:'Non-Pareto',red:'BISA',poin:505,mt:32000},
+  {n:'ICE HAZELNUT LATTE',hpp:8545,hj:28000,gm:19455,gmp:.6948,par:'Non-Pareto',red:'BISA',poin:430,mt:28000},
+  {n:'HOT HAZELNUT LATTE',hpp:9751,hj:28000,gm:18249,gmp:.6518,par:'Non-Pareto',red:'BISA',poin:490,mt:31000},
+  {n:'KOPI PANDAN SRIKAYA',hpp:9096,hj:28000,gm:18904,gmp:.6751,par:'Non-Pareto',red:'BISA',poin:455,mt:29000},
+  {n:'ICE AMERICANO LEMONERO',hpp:7932,hj:25000,gm:17068,gmp:.6827,par:'Non-Pareto',red:'BISA',poin:400,mt:26000},
+  {n:'ICE LEMON TEA',hpp:4473,hj:22000,gm:17527,gmp:.7967,par:'Non-Pareto',red:'BISA',poin:225,mt:15000},
+  {n:'HOT LEMON TEA',hpp:3241,hj:19000,gm:15759,gmp:.8294,par:'Non-Pareto',red:'BISA',poin:165,mt:11000},
+  {n:'LYCHEE TEA',hpp:6066,hj:23000,gm:16934,gmp:.7363,par:'Non-Pareto',red:'BISA',poin:305,mt:20000},
+  {n:'HOT TEH TARIK',hpp:4232,hj:20000,gm:15768,gmp:.7884,par:'Non-Pareto',red:'BISA',poin:215,mt:14000},
+  {n:'ICE TEH TARIK',hpp:3770,hj:22000,gm:18230,gmp:.8286,par:'Non-Pareto',red:'BISA',poin:190,mt:12000},
+  {n:'ICE CHOCO',hpp:6988,hj:23000,gm:16012,gmp:.6962,par:'Pareto A',red:'BISA',poin:350,mt:23000},
+  {n:'ICE RED VELVET',hpp:9969,hj:28000,gm:18031,gmp:.644,par:'Non-Pareto',red:'BISA',poin:500,mt:32000},
+  {n:'ICE MATCHA',hpp:5718,hj:28000,gm:22282,gmp:.7958,par:'Pareto B',red:'BISA',poin:290,mt:19000},
+  {n:'STRAWBERRY MATCHA',hpp:7892,hj:28000,gm:20108,gmp:.7181,par:'Pareto B',red:'BISA',poin:395,mt:25000},
+  {n:'HOT MATCHA',hpp:9679,hj:28000,gm:18321,gmp:.6543,par:'Non-Pareto',red:'BISA',poin:485,mt:31000},
+  {n:'ICE REGAL',hpp:7219,hj:23000,gm:15781,gmp:.6861,par:'Non-Pareto',red:'BISA',poin:365,mt:23000},
+  {n:'ICE PISANG COKLAT',hpp:7264,hj:25000,gm:17736,gmp:.7094,par:'Non-Pareto',red:'BISA',poin:365,mt:23000},
+  {n:'COTTON CANDY',hpp:6521,hj:23000,gm:16479,gmp:.7165,par:'Non-Pareto',red:'BISA',poin:330,mt:21000},
+  {n:'PANDAN SRIKAYA',hpp:8732,hj:22000,gm:13268,gmp:.6031,par:'Non-Pareto',red:'BISA',poin:440,mt:28000},
+  {n:'PIJAR MATAHARI',hpp:8667,hj:28000,gm:19333,gmp:.6905,par:'Non-Pareto',red:'BISA',poin:435,mt:28000},
+  {n:'MANGGUO',hpp:7337,hj:22000,gm:14663,gmp:.6665,par:'Non-Pareto',red:'BISA',poin:370,mt:24000},
+  {n:'PINEAPLE EXPRESS',hpp:6198,hj:23000,gm:16802,gmp:.7305,par:'Non-Pareto',red:'BISA',poin:310,mt:20000},
+  {n:'ROTI KUKUS SRIKAYA',hpp:2530,hj:6500,gm:3970,gmp:.6108,par:'Pareto A',red:'BISA',poin:130,mt:9000},
+  {n:'ROTI KUKUS COKLAT',hpp:2415,hj:6500,gm:4085,gmp:.6285,par:'Pareto A',red:'BISA',poin:125,mt:8000},
+  {n:'ROTI KUKUS KEJU',hpp:2530,hj:7000,gm:4470,gmp:.6386,par:'Pareto A',red:'BISA',poin:130,mt:9000},
+  {n:'ROTI GORENG COKLAT',hpp:2415,hj:6500,gm:4085,gmp:.6285,par:'Pareto B',red:'BISA',poin:125,mt:8000},
+  {n:'ROTI GORENG KEJU',hpp:2530,hj:7000,gm:4470,gmp:.6386,par:'Non-Pareto',red:'BISA',poin:130,mt:9000},
+  {n:'BIGBUN BLACK PAPPER',hpp:9810,hj:25000,gm:15190,gmp:.6076,par:'Non-Pareto',red:'BISA',poin:495,mt:32000},
+  {n:'INDOMIE GORENG SINGLE',hpp:5762,hj:18000,gm:12238,gmp:.6799,par:'Non-Pareto',red:'BISA',poin:290,mt:19000},
+  {n:'INDOMIE SOTO SINGLE',hpp:5675,hj:18000,gm:12325,gmp:.6847,par:'Non-Pareto',red:'BISA',poin:285,mt:18000},
+  {n:'INDOMIE KALDU SINGLE',hpp:5373,hj:18000,gm:12627,gmp:.7015,par:'Non-Pareto',red:'BISA',poin:270,mt:17000},
+  {n:'INDOMIE KALDU DOUBLE',hpp:8378,hj:22000,gm:13622,gmp:.6192,par:'Non-Pareto',red:'BISA',poin:420,mt:27000},
+  {n:'INDOMIE COTO SINGLE',hpp:5963,hj:18000,gm:12037,gmp:.6687,par:'Non-Pareto',red:'BISA',poin:300,mt:19000},
+  {n:'KOKAM SELITER',hpp:61507,hj:100000,gm:38493,gmp:.38493,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'TEH TARIK 1 LITER',hpp:26205,hj:85000,gm:58795,gmp:.6917,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'ROTI KUKUS AYAM',hpp:3565,hj:7500,gm:3935,gmp:.5247,par:'Pareto A',red:'TIDAK',poin:null,mt:null},
+  {n:'ROTI KUKUS SAPI',hpp:4255,hj:8500,gm:4245,gmp:.4994,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'ROTI GORENG SRIKAYA',hpp:2645,hj:6500,gm:3855,gmp:.5931,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'ROTI GORENG AYAM',hpp:3565,hj:7500,gm:3935,gmp:.5247,par:'Pareto A',red:'TIDAK',poin:null,mt:null},
+  {n:'ROTI GORENG SAPI',hpp:4255,hj:8500,gm:4245,gmp:.4994,par:'Pareto A',red:'TIDAK',poin:null,mt:null},
+  {n:'NASI GORENG TAOBUN',hpp:13052,hj:30000,gm:16948,gmp:.5649,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'NASI GORENG HONGKONG',hpp:12229,hj:30000,gm:17771,gmp:.5924,par:'Pareto B',red:'TIDAK',poin:null,mt:null},
+  {n:'NASI AYAM LADA HITAM',hpp:13098,hj:35000,gm:21902,gmp:.6258,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'CHICKEN KUNGPAO',hpp:16615,hj:35000,gm:18385,gmp:.5253,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'CHICKEN SALTED EGG',hpp:25924,hj:35000,gm:9076,gmp:.2593,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'NASI AYAM GEPREK',hpp:18838,hj:35000,gm:16162,gmp:.4618,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'NASI BEEF BLACKPAPPER',hpp:14631,hj:38000,gm:23369,gmp:.615,par:'Pareto B',red:'TIDAK',poin:null,mt:null},
+  {n:'NASI BEEF TERIYAKI',hpp:15223,hj:38000,gm:22777,gmp:.5994,par:'Pareto B',red:'TIDAK',poin:null,mt:null},
+  {n:'NASI AYAM SPICY',hpp:13025,hj:35000,gm:21975,gmp:.6279,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'NASI AYAM GORENG MENTEGA',hpp:14650,hj:35000,gm:20350,gmp:.5814,par:'Pareto B',red:'TIDAK',poin:null,mt:null},
+  {n:'INDOMIE GORENG SALTED EGG',hpp:14532,hj:25000,gm:10468,gmp:.41872,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'INDOMIE GORENG KORNET',hpp:9337,hj:20000,gm:10663,gmp:.53315,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'INDOMIE GORENG DOUBLE',hpp:9154,hj:22000,gm:12846,gmp:.5839,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'INDOMIE SOTO DOUBLE',hpp:8982,hj:22000,gm:13018,gmp:.5917,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+  {n:'INDOMIE COTO DOUBLE',hpp:9557,hj:22000,gm:12443,gmp:.5656,par:'Non-Pareto',red:'TIDAK',poin:null,mt:null},
+];
+// Use let so xlApply can mutate via .length=0 / .push()
+let P = SB_P.slice();
+
+const SB_TIERS = [
+  {k:'bronze',lbl:'🥉 Bronze Bun',mult:1,css:'tb-br'},
+  {k:'silver',lbl:'🥈 Silver Bun',mult:1.2,css:'tb-si'},
+  {k:'gold',lbl:'🥇 Gold Bun',mult:1.5,css:'tb-go'},
+  {k:'platinum',lbl:'💎 Platinum Bun',mult:2,css:'tb-pl'},
+];
+
+let RW = [
+  {t:'bronze',n:'Selamat Datang, Bun! 🎉',item:'ROTI KUKUS SRIKAYA',hj:6500,hpp:2530,gm:.611,poin:125,ef:250000,rs:null,ket:'Quick win ~8x transaksi — akuisisi member baru'},
+  {t:'bronze',n:'Ngopi Perdana Gratis',item:'ROTI KUKUS COKLAT',hj:6500,hpp:2415,gm:.628,poin:120,ef:240000,rs:null,ket:'Quick win ~7x transaksi'},
+  {t:'bronze',n:'First Bite on Us',item:'ROTI KUKUS KEJU',hj:7000,hpp:2530,gm:.639,poin:125,ef:250000,rs:null,ket:'Quick win ~8x transaksi'},
+  {t:'bronze',n:'Bronze Welcome Pack',item:'ROTI GORENG SRIKAYA',hj:6500,hpp:2645,gm:.593,poin:135,ef:270000,rs:null,ket:'Quick win ~8x transaksi'},
+  {t:'bronze',n:'Yuk Mulai, Free Roti!',item:'ROTI GORENG AYAM',hj:7500,hpp:3565,gm:.525,poin:180,ef:360000,rs:null,ket:'Quick win ~11x transaksi'},
+  {t:'bronze',n:'Kenalan Dulu, Gratis Dulu',item:'ROTI KUKUS AYAM',hj:7500,hpp:3565,gm:.525,poin:180,ef:360000,rs:null,ket:'Quick win ~11x transaksi'},
+  {t:'bronze',n:'Promo Member Baru — Roti Goreng',item:'ROTI GORENG COKLAT',hj:6500,hpp:2415,gm:.628,poin:120,ef:240000,rs:null,ket:'Quick win ~7x transaksi'},
+  {t:'silver',n:'Silver Refresher ☕',item:'ICE AMERICANO',hj:22000,hpp:5992,gm:.728,poin:150,ef:250000,rs:.83,ket:'👍 Wajar — 83% dari threshold STAY'},
+  {t:'silver',n:'Minuman Favorit Gratis',item:'ICE LEMON TEA',hj:22000,hpp:4473,gm:.797,poin:115,ef:191667,rs:.64,ket:'👍 Wajar — 64% dari threshold STAY'},
+  {t:'silver',n:'Silver Chill Treat',item:'ICE TEH TARIK',hj:22000,hpp:3770,gm:.829,poin:95,ef:158333,rs:.53,ket:'✅ Sangat worth it — 53% dari threshold STAY'},
+  {t:'silver',n:'Coklat Gratis Buat Member Setia',item:'ICE CHOCO',hj:23000,hpp:6988,gm:.696,poin:175,ef:291667,rs:.97,ket:'⚠️ Berat — 97% dari threshold STAY'},
+  {t:'silver',n:'Silver Latte Day',item:'ICE COFFEE LATTE',hj:23000,hpp:5630,gm:.755,poin:140,ef:233333,rs:.78,ket:'👍 Wajar — 78% dari threshold STAY'},
+  {t:'silver',n:'Matcha Reward — Silver Only',item:'ICE MATCHA',hj:28000,hpp:5718,gm:.796,poin:145,ef:241667,rs:.81,ket:'👍 Wajar — 81% dari threshold STAY'},
+  {t:'silver',n:'Cotton Candy Vibes 🍬',item:'COTTON CANDY',hj:23000,hpp:6521,gm:.716,poin:165,ef:275000,rs:.92,ket:'⚠️ Berat — 92% dari threshold STAY'},
+  {t:'silver',n:'Lemon Tea Treat — Silver Only',item:'HOT LEMON TEA',hj:19000,hpp:3241,gm:.829,poin:80,ef:133333,rs:.44,ket:'✅ Sangat worth it — 44% dari threshold STAY'},
+  {t:'gold',n:'Gold Member Special ☕',item:'ES KOPI KEMBOJA',hj:25000,hpp:9352,gm:.626,poin:470,ef:626667,rs:.84,ket:'👍 Wajar — 84% dari threshold STAY'},
+  {t:'gold',n:'Signature Kopi Reward',item:'ICE KOPI KEMUNING',hj:23000,hpp:6994,gm:.696,poin:350,ef:466667,rs:.62,ket:'👍 Wajar — 62% dari threshold STAY'},
+  {t:'gold',n:'Aren Vibes — Gold Only',item:'ICE AMERICANO AREN',hj:22000,hpp:7862,gm:.643,poin:395,ef:526667,rs:.7,ket:'👍 Wajar — 70% dari threshold STAY'},
+  {t:'gold',n:'Matcha Premium Reward',item:'STRAWBERRY MATCHA',hj:28000,hpp:7892,gm:.718,poin:395,ef:526667,rs:.7,ket:'👍 Wajar — 70% dari threshold STAY'},
+  {t:'gold',n:'Hazelnut Latte on Us',item:'ICE HAZELNUT LATTE',hj:28000,hpp:8545,gm:.695,poin:430,ef:573333,rs:.76,ket:'👍 Wajar — 76% dari threshold STAY'},
+  {t:'gold',n:'Gold Pisang Coklat Treat',item:'ICE PISANG COKLAT',hj:25000,hpp:7264,gm:.709,poin:365,ef:486667,rs:.65,ket:'👍 Wajar — 65% dari threshold STAY'},
+  {t:'gold',n:'Regal Gold Member Drink',item:'ICE REGAL',hj:23000,hpp:7219,gm:.686,poin:360,ef:480000,rs:.64,ket:'👍 Wajar — 64% dari threshold STAY'},
+  {t:'gold',n:'Pijar Matahari — Gold Exclusive',item:'PIJAR MATAHARI',hj:28000,hpp:8667,gm:.69,poin:435,ef:580000,rs:.77,ket:'👍 Wajar — 77% dari threshold STAY'},
+  {t:'platinum',n:'VIP Caramel Experience ✨',item:'CARAMEL MACCHIATO',hj:28000,hpp:10072,gm:.64,poin:505,ef:505000,rs:.28,ket:'✅ Sangat worth it — 28% dari threshold STAY'},
+  {t:'platinum',n:'Platinum Nasi Hongkong',item:'NASI GORENG HONGKONG',hj:30000,hpp:12229,gm:.592,poin:615,ef:615000,rs:.34,ket:'✅ Sangat worth it — 34% dari threshold STAY'},
+  {t:'platinum',n:'Beef Blackpepper — VIP Only',item:'NASI BEEF BLACKPAPPER',hj:38000,hpp:14631,gm:.615,poin:735,ef:735000,rs:.41,ket:'✅ Sangat worth it — 41% dari threshold STAY'},
+  {t:'platinum',n:'Red Velvet Eksklusif',item:'ICE RED VELVET',hj:28000,hpp:9969,gm:.644,poin:500,ef:500000,rs:.28,ket:'✅ Sangat worth it — 28% dari threshold STAY'},
+  {t:'platinum',n:'Kopi Pandan Srikaya VIP',item:'KOPI PANDAN SRIKAYA',hj:28000,hpp:9096,gm:.675,poin:455,ef:455000,rs:.25,ket:'✅ Sangat worth it — 25% dari threshold STAY'},
+  {t:'platinum',n:'Platinum Beef Teriyaki',item:'NASI BEEF TERIYAKI',hj:38000,hpp:15223,gm:.599,poin:760,ef:760000,rs:.42,ket:'✅ Sangat worth it — 42% dari threshold STAY'},
+  {t:'platinum',n:'Mangguo VIP Treat 🥭',item:'MANGGUO',hj:22000,hpp:7337,gm:.667,poin:370,ef:370000,rs:.21,ket:'✅ Sangat worth it — 21% dari threshold STAY'},
+];
+
+const sbRp = v => 'Rp ' + Math.round(v).toLocaleString('id-ID');
+const sbPct = v => (v*100).toFixed(1)+'%';
+const sbParseRp = s => { if(!s) return 0; return parseFloat(String(s).replace(/[^0-9]/g,''))||0; };
+function rpFmt(el) { let v=el.value.replace(/[^0-9]/g,''); el.value=v?'Rp '+parseInt(v).toLocaleString('id-ID'):''; }
+function qcFmt(el) { const d=el.value.replace(/[^0-9]/g,''); el.value=d?'Rp '+parseInt(d).toLocaleString('id-ID'):''; }
+function sbSpill(gm) {
+  if(gm>=.45) return '<span class="sp sp-am">✅ AMAN</span>';
+  if(gm>=.38) return '<span class="sp sp-ti">⚠️ MENIPIS</span>';
+  return '<span class="sp sp-bo">🔴 BONCOS</span>';
+}
+function sbTbadge(t) {
+  const m={bronze:'tb-br',silver:'tb-si',gold:'tb-go',platinum:'tb-pl'};
+  const l={bronze:'🥉 Bronze',silver:'🥈 Silver',gold:'🥇 Gold',platinum:'💎 Platinum'};
+  return `<span class="tbadge ${m[t]}">${l[t]}</span>`;
+}
+function sbGc(v) { return v>=.45?'var(--success)':v>=.38?'#f59e0b':'#ef4444'; }
+
+function sbGoto(id, el) {
+  document.querySelectorAll('.sobun-wrapper .page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sobun-wrapper .nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sb-page-'+id).classList.add('active');
+  el.classList.add('active');
+  // Re-render the tab content so data is always fresh when switching
+  if (id === 'master')    renderMaster();
+  if (id === 'reward')    renderRw();
+  if (id === 'dashboard') initDash();
+  if (id === 'tiering')   calcT();
+  if (id === 'profit')    calcP();
+  if (id === 'promo')     cbRender();
+  sbSave();
+}
+
+function sbSave() {
+  const d = {
+    theme: document.body.getAttribute('data-theme'),
+    qc_b: document.getElementById('qc-b').value,
+    qc_t: document.getElementById('qc-t').value,
+    t_bp: document.getElementById('t-bp').value,
+    t_np: document.getElementById('t-np').value,
+    t_avg: document.getElementById('t-avg').value,
+    p_hpp: document.getElementById('p-hpp').value,
+    p_bp: document.getElementById('p-bp').value,
+    p_np: document.getElementById('p-np').value,
+    p_abr: document.getElementById('p-abr').value,
+    p_asi: document.getElementById('p-asi').value,
+    p_ago: document.getElementById('p-ago').value,
+    p_apl: document.getElementById('p-apl').value,
+    promos: promos,
+  };
+  try { localStorage.setItem(LS_KEY_SOBUN, JSON.stringify(d)); flashSave(); } catch(e) {}
+}
+function sbLoad() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_SOBUN);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    const setVal = (id, val) => { const el=document.getElementById(id); if(el&&val!==undefined&&val!==null) el.value=val; };
+    setVal('qc-b',d.qc_b); setVal('qc-t',d.qc_t);
+    setVal('t-bp',d.t_bp); setVal('t-np',d.t_np); setVal('t-avg',d.t_avg);
+    setVal('p-hpp',d.p_hpp); setVal('p-bp',d.p_bp); setVal('p-np',d.p_np);
+    setVal('p-abr',d.p_abr); setVal('p-asi',d.p_asi); setVal('p-ago',d.p_ago); setVal('p-apl',d.p_apl);
+    if (Array.isArray(d.promos)) { promos = d.promos; renderPromo(); }
+    if (d.theme) {
+      document.body.setAttribute('data-theme', d.theme);
+      document.documentElement.setAttribute('data-theme', d.theme);
+    }
+    qc(); calcT(); calcP();
+  } catch(e) {}
+}
+function flashSave() {
+  const dot = document.getElementById('saveDot');
+  if(!dot) return;
+  dot.classList.remove('visible');
+  void dot.offsetWidth;
+  dot.classList.add('visible');
+}
+
+function initDash() {
+  // Dashboard stats update
+  const t1 = document.getElementById('hero-total-prod');
+  const t2 = document.getElementById('stat-total-prod');
+  if (t1) t1.textContent = P.length;
+  if (t2) t2.textContent = P.length;
+}
+
+function qc() {
+  const v = sbParseRp(document.getElementById('qc-b').value);
+  const m = parseFloat(document.getElementById('qc-t').value)||1;
+  if (!v) {
+    document.getElementById('qc-res').style.display='none';
+    document.getElementById('qc-ph').style.display='block';
+    return;
+  }
+  document.getElementById('qc-res').style.display='block';
+  document.getElementById('qc-ph').style.display='none';
+  const base=Math.floor(v/2000), tot=Math.floor(base*m), val=tot*20;
+  document.getElementById('qc-base').textContent=base+' poin';
+  document.getElementById('qc-mult').textContent=m+'×';
+  document.getElementById('qc-tot').textContent=tot+' poin';
+  document.getElementById('qc-val').textContent=sbRp(val);
+  document.getElementById('qc-col').textContent=sbPct(v>0?val/v:0);
+}
+
+let mpF = 'semua';
+function mpFilter(el) {
+  mpF = el.dataset.f;
+  document.querySelectorAll('#mp-fpr .fp').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  renderMaster();
+}
+function renderMaster() {
+  const q = document.getElementById('mp-q').value.toLowerCase();
+  const data = P.filter(p=>{
+    if (q&&!p.n.toLowerCase().includes(q)) return false;
+    if (mpF==='Pareto A') return p.par==='Pareto A';
+    if (mpF==='Pareto B') return p.par==='Pareto B';
+    if (mpF==='Non-Pareto') return p.par==='Non-Pareto';
+    if (mpF==='bisa') return p.red==='BISA';
+    if (mpF==='tidak') return p.red==='TIDAK';
+    return true;
+  });
+  const tc={'Pareto A':'tag-a','Pareto B':'tag-b','Non-Pareto':'tag-np'};
+  document.getElementById('master-tb').innerHTML = data.map((p,i)=>`
+    <tr>
+      <td class="mono" style="color:var(--muted)">${i+1}</td>
+      <td style="font-weight:700;white-space:nowrap">${p.n}</td>
+      <td class="tr mono">${sbRp(p.hpp)}</td>
+      <td class="tr mono">${sbRp(p.hj)}</td>
+      <td class="tr mono">${sbRp(p.gm)}</td>
+      <td class="tr mono" style="color:${sbGc(p.gmp)}">${sbPct(p.gmp)}</td>
+      <td class="tc2"><span class="tag ${tc[p.par]||'tag-np'}">${p.par}</span></td>
+      <td class="tr mono">${p.poin??'—'}</td>
+      <td>${p.red==='BISA'?'<span class="sp sp-am">✅ Bisa</span>':'<span class="sp sp-bo">❌ Tidak</span>'}</td>
+    </tr>`).join('');
+  document.getElementById('mp-count').textContent=`${data.length} dari ${P.length} produk ditampilkan`;
+}
+
+function calcT() {
+  const BP=sbParseRp(document.getElementById('t-bp').value)||2000;
+  const NP=sbParseRp(document.getElementById('t-np').value)||20;
+  const avg=sbParseRp(document.getElementById('t-avg').value)||0;
+  document.getElementById('t-sim-tb').innerHTML = SB_TIERS.map(t=>{
+    const poin=avg>0?Math.floor(avg/BP*t.mult):0, val=poin*NP, col=avg>0?val/avg:0;
+    const cc=col<=.02?'var(--success)':col<=.03?'#f59e0b':'#ef4444';
+    return `<tr>
+      <td><span class="tbadge ${t.css}">${t.lbl}</span></td>
+      <td class="tr mono">${avg>0?poin+' poin':'—'}</td>
+      <td class="tr mono">${avg>0?sbRp(val):'—'}</td>
+      <td class="tr mono" style="color:${avg>0?cc:'var(--muted)'}">${avg>0?sbPct(col):'—'}</td>
+    </tr>`;
+  }).join('');
+  SB_TIERS.forEach(t=>{
+    const poin=avg>0?Math.floor(avg/sbParseRp(document.getElementById('t-bp').value||'2000')*t.mult):0;
+    const el=document.getElementById('tci-'+t.k);
+    if(el) el.innerHTML=`
+      <div class="tc-row"><span>Poin per Transaksi</span><span>${avg>0?poin+' poin':'—'}</span></div>
+      <div class="tc-row"><span>Nilai Poin</span><span>${avg>0?sbRp(poin*NP):'—'}</span></div>
+      <div class="tc-row"><span>Cost of Loyalty</span><span>${avg>0?sbPct(avg>0?poin*NP/avg:0):'—'}</span></div>`;
+  });
+}
+
+function calcP() {
+  const hp=(parseFloat(document.getElementById('p-hpp').value)||36.55)/100;
+  const BP=sbParseRp(document.getElementById('p-bp').value)||2000;
+  const NP=sbParseRp(document.getElementById('p-np').value)||20;
+  const avgs={
+    bronze:sbParseRp(document.getElementById('p-abr').value),
+    silver:sbParseRp(document.getElementById('p-asi').value),
+    gold:sbParseRp(document.getElementById('p-ago').value),
+    platinum:sbParseRp(document.getElementById('p-apl').value),
+  };
+  document.getElementById('profit-tb').innerHTML = SB_TIERS.map(t=>{
+    const avg=avgs[t.k]||0;
+    const eh=avg*hp, gma=avg-eh, poin=Math.floor(avg/BP)*t.mult, bp2=poin*NP, gmf=gma-bp2, gmp=avg>0?gmf/avg:0;
+    return `<tr>
+      <td><span class="tbadge ${t.css}">${t.lbl}</span></td>
+      <td class="tr mono">${avg>0?sbRp(avg):'—'}</td>
+      <td class="tr mono">${avg>0?sbRp(eh):'—'}</td>
+      <td class="tr mono">${avg>0?sbRp(gma):'—'}</td>
+      <td class="tr mono" style="color:#ef4444">${avg>0?sbRp(bp2):'—'}</td>
+      <td class="tr mono">${avg>0?sbRp(gmf):'—'}</td>
+      <td class="tr mono" style="color:${sbGc(gmp)}">${avg>0?sbPct(gmp):'—'}</td>
+      <td>${avg>0?sbSpill(gmp):'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+let rwF = 'semua';
+function rwFilter(el) {
+  rwF = el.dataset.f;
+  document.querySelectorAll('#rw-fpr .fp').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  renderRw();
+}
+function renderRw() {
+  const data = rwF==='semua'?RW:RW.filter(r=>r.t===rwF);
+  document.getElementById('rw-tb').innerHTML = data.map(r=>{
+    const rc=r.rs!==null?(r.rs<=.7?'var(--success)':r.rs<=.9?'#f59e0b':'#ef4444'):'var(--muted)';
+    return `<tr>
+      <td>${sbTbadge(r.t)}</td>
+      <td style="font-weight:700;white-space:nowrap">${r.n}</td>
+      <td style="white-space:nowrap">${r.item}</td>
+      <td class="tr mono">${sbRp(r.hj)}</td>
+      <td class="tr mono">${sbRp(r.hpp)}</td>
+      <td class="tr mono" style="color:${sbGc(r.gm)}">${sbPct(r.gm)}</td>
+      <td class="tr mono" style="color:var(--primary)">${r.poin}</td>
+      <td class="tr mono">${sbRp(r.ef)}</td>
+      <td class="tr mono" style="color:${rc}">${r.rs!==null?sbPct(r.rs):'—'}</td>
+      <td style="font-size:11px;color:var(--text);min-width:160px">${r.ket}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Combobox
+let cbFocus = -1, selP = null;
+function cbRender(q='') {
+  const dd=document.getElementById('cb-dd');
+  // Show/hide no-products warning
+  const noBanner = document.getElementById('promo-no-products-banner');
+  const cwEl = document.getElementById('cw');
+  if (P.length === 0) {
+    if (noBanner) noBanner.classList.add('show');
+    if (cwEl) cwEl.style.display = 'none';
+    return;
+  } else {
+    if (noBanner) noBanner.classList.remove('show');
+    if (cwEl) cwEl.style.display = '';
+  }
+  const items=P.filter(p=>!q||p.n.toLowerCase().includes(q.toLowerCase()));
+  if(!items.length){dd.innerHTML='<div class="co-empty">Produk tidak ditemukan</div>';return;}
+  dd.innerHTML=items.map(p=>`
+    <div class="co" data-n="${p.n}" onclick="cbSel('${p.n.replace(/'/g,"\\'")}')">
+      ${p.n}<div class="co-sub">${sbRp(p.hj)} · HPP ${sbRp(p.hpp)} · GM ${sbPct(p.gmp)}</div>
+    </div>`).join('');
+  cbFocus=-1;
+}
+function cbOpen(){document.getElementById('cb-dd').classList.add('open');cbRender(document.getElementById('pr-inp').value);}
+function cbFilter(){document.getElementById('cb-dd').classList.add('open');cbRender(document.getElementById('pr-inp').value);}
+function cbSel(name){
+  document.getElementById('pr-inp').value=name;
+  document.getElementById('pr-val').value=name;
+  document.getElementById('cb-dd').classList.remove('open');
+  selP=P.find(p=>p.n===name);
+  if(selP){document.getElementById('pr-hj').value=sbRp(selP.hj);document.getElementById('pr-hpp').value=sbRp(selP.hpp);}
+  preLive();
+}
+function cbKey(e){
+  const dd=document.getElementById('cb-dd'), opts=dd.querySelectorAll('.co');
+  if(e.key==='ArrowDown'){e.preventDefault();cbFocus=Math.min(cbFocus+1,opts.length-1);opts.forEach((o,i)=>o.classList.toggle('foc',i===cbFocus));if(opts[cbFocus])opts[cbFocus].scrollIntoView({block:'nearest'});}
+  else if(e.key==='ArrowUp'){e.preventDefault();cbFocus=Math.max(cbFocus-1,0);opts.forEach((o,i)=>o.classList.toggle('foc',i===cbFocus));}
+  else if(e.key==='Enter'){e.preventDefault();if(cbFocus>=0&&opts[cbFocus])opts[cbFocus].click();else dd.classList.remove('open');}
+  else if(e.key==='Escape')dd.classList.remove('open');
+}
+document.addEventListener('click',e=>{
+  const cw=document.getElementById('cw');
+  if(cw&&!cw.contains(e.target))document.getElementById('cb-dd').classList.remove('open');
+});
+
+// Promo simulasi
+let promos = [];
+function prTipe(){
+  const t=document.getElementById('pr-tipe').value, dw=document.getElementById('pr-dw'), dl=document.getElementById('pr-dl');
+  if(t==='gratis'){dw.style.display='none';}else{dw.style.display='flex';dl.textContent=t==='drp'?'Nominal Diskon (Rp)':'Diskon (%)';}
+}
+function calcV(prod,qty,tipe,disRaw,mt){
+  if(!prod)return null;
+  const hpp=prod.hpp*qty, rev=mt;
+  let dis=0;
+  if(tipe==='drp')dis=sbParseRp(disRaw)||0;
+  else if(tipe==='dpct')dis=prod.hj*qty*((parseFloat(disRaw)||0)/100);
+  const net=rev-hpp-dis, gm=rev>0?net/rev:0;
+  return{hpp,rev,net,gm};
+}
+function preLive(){
+  if(!selP){document.getElementById('pr-prev').style.display='none';return;}
+  const qty=parseInt(document.getElementById('pr-qty').value)||1;
+  const tipe=document.getElementById('pr-tipe').value;
+  const dis=document.getElementById('pr-dis').value;
+  const mt=sbParseRp(document.getElementById('pr-mt').value)||0;
+  const v=calcV(selP,qty,tipe,dis,mt);
+  if(!v)return;
+  document.getElementById('pr-prev').style.display='block';
+  document.getElementById('pv-hpp').textContent=sbRp(v.hpp);
+  document.getElementById('pv-rev').textContent=sbRp(v.rev);
+  document.getElementById('pv-net').textContent=sbRp(v.net);
+  const gmEl=document.getElementById('pv-gm');
+  gmEl.textContent=sbPct(v.gm);gmEl.style.color=sbGc(v.gm);
+  document.getElementById('pv-st').innerHTML=sbSpill(v.gm);
+}
+function addPromo(){
+  if(!selP){
+    xlToast('⚠️ Pilih produk terlebih dahulu dari dropdown.');
+    document.getElementById('pr-inp').classList.add('input-error');
+    setTimeout(() => document.getElementById('pr-inp').classList.remove('input-error'), 2000);
+    return;
+  }
+  const nm=document.getElementById('pr-nm').value.trim()||'Promo #'+(promos.length+1);
+  const qty=parseInt(document.getElementById('pr-qty').value)||1;
+  const tipe=document.getElementById('pr-tipe').value;
+  const dis=document.getElementById('pr-dis').value;
+  const mt=sbParseRp(document.getElementById('pr-mt').value)||0;
+  const v=calcV(selP,qty,tipe,dis,mt);
+  if(!v)return;
+  const tl={gratis:'🎁 Gratis',drp:'💸 Diskon Rp',dpct:'📉 Diskon %'};
+  promos.push({nm,prod:selP.n,qty,tipe:tl[tipe],...v});
+  renderPromo();
+  document.getElementById('pr-nm').value='';
+  xlToast('✅ Promo "'+nm+'" berhasil ditambahkan.');
+  sbSave();
+}
+function delPromo(i){promos.splice(i,1);renderPromo();sbSave();}
+function renderPromo(){
+  document.getElementById('pr-empty').style.display=promos.length?'none':'block';
+  document.getElementById('pr-tw').style.display=promos.length?'block':'none';
+  document.getElementById('pr-tb').innerHTML=promos.map((pr,i)=>`
+    <tr>
+      <td class="mono" style="color:var(--muted)">${i+1}</td>
+      <td style="font-weight:700;white-space:nowrap">${pr.nm}</td>
+      <td style="white-space:nowrap">${pr.prod}</td>
+      <td class="tc2 mono">${pr.qty}</td>
+      <td style="font-size:12px;white-space:nowrap">${pr.tipe}</td>
+      <td class="tr mono">${sbRp(pr.hpp)}</td>
+      <td class="tr mono">${sbRp(pr.rev)}</td>
+      <td class="tr mono" style="color:${pr.net>=0?'var(--success)':'#ef4444'}">${sbRp(pr.net)}</td>
+      <td class="tr mono" style="color:${sbGc(pr.gm)}">${sbPct(pr.gm)}</td>
+      <td>${sbSpill(pr.gm)}</td>
+      <td><button class="btn-del" onclick="delPromo(${i})">✕</button></td>
+    </tr>`).join('');
+}
+// Import Excel (Sobun)
+let xlParsed = null;
+function xlOpen(){document.getElementById('xl-overlay').classList.add('open');xlReset();}
+function xlClose(){document.getElementById('xl-overlay').classList.remove('open');xlParsed=null;}
+function xlOverlayClick(e){if(e.target===document.getElementById('xl-overlay'))xlClose();}
+function xlReset(){
+  xlParsed=null;
+  document.getElementById('xl-drop-txt').textContent='Klik atau drag & drop file Excel di sini';
+  document.getElementById('xl-drop').classList.remove('drag');
+  document.getElementById('xl-progress').classList.remove('show');
+  document.getElementById('xl-err').classList.remove('show');
+  document.getElementById('xl-preview').classList.remove('show');
+  document.getElementById('xl-apply-btn').disabled=true;
+  document.getElementById('xl-prog-fill').style.width='0%';
+}
+function xlDrag(e,over){e.preventDefault();document.getElementById('xl-drop').classList.toggle('drag',over);}
+function xlDropFile(e){e.preventDefault();document.getElementById('xl-drop').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)xlProcess(f);}
+function xlFileInput(e){const f=e.target.files[0];if(f)xlProcess(f);}
+function xlProgress(pct,msg){document.getElementById('xl-progress').classList.add('show');document.getElementById('xl-prog-fill').style.width=pct+'%';document.getElementById('xl-prog-txt').textContent=msg;}
+function xlShowErr(msg){const el=document.getElementById('xl-err');el.textContent='⚠️ '+msg;el.classList.add('show');}
+function xlProcess(file){
+  if(!file.name.match(/\.xlsx?$/i)){xlShowErr('File harus berformat .xlsx atau .xls');return;}
+  document.getElementById('xl-drop-txt').textContent='📂 '+file.name;
+  document.getElementById('xl-err').classList.remove('show');
+  document.getElementById('xl-preview').classList.remove('show');
+  document.getElementById('xl-apply-btn').disabled=true;
+  xlProgress(10,'Membaca file...');
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      xlProgress(40,'Parsing Excel...');
+      const data=new Uint8Array(e.target.result), wb=XLSX.read(data,{type:'array'});
+      xlProgress(70,'Mengolah data...');
+      xlParsed=xlExtract(wb);
+      xlProgress(100,'Selesai!');
+      xlShowPreview(xlParsed);
+      document.getElementById('xl-apply-btn').disabled=false;
+    }catch(err){xlShowErr('Gagal membaca file: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function xlExtract(wb){
+  const result={};
+  if(wb.SheetNames.includes('Master Produk')){
+    const ws=wb.Sheets['Master Produk'],rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''}),products=[];
+    for(let i=1;i<rows.length;i++){const r=rows[i],nama=String(r[0]||'').trim();if(!nama)continue;const hpp=parseFloat(r[1])||0,hj=parseFloat(r[2])||0,gm=hj-hpp,gmp=hj>0?gm/hj:0,par=String(r[5]||'Non-Pareto').trim(),red=(gmp>=0.6&&hj<=30000)?'BISA':'TIDAK',poin=red==='BISA'?Math.ceil(hpp/20/5)*5:null,mt=red==='BISA'?Math.ceil((poin*20+hpp)/(1-0.3655)/1000)*1000:null;products.push({n:nama,hpp,hj,gm,gmp,par,red,poin,mt});}
+    result.products=products;
+  }
+  if(wb.SheetNames.includes('Skema Tiering (Max 2%)')){const ws=wb.Sheets['Skema Tiering (Max 2%)'],rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});result.tiering={bp:parseFloat(rows[1]?.[1])||2000,np:parseFloat(rows[2]?.[1])||20};}
+  if(wb.SheetNames.includes('Simulasi Profitabilitas')){const ws=wb.Sheets['Simulasi Profitabilitas'],rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});const hppPct=parseFloat(rows[1]?.[1]);if(!isNaN(hppPct))result.hppPct=hppPct<=1?hppPct*100:hppPct;}
+  return result;
+}
+function xlShowPreview(d){
+  const rows=[];
+  if(d.products)rows.push({label:'Master Produk',val:d.products.length+' produk ditemukan'});
+  if(d.tiering)rows.push({label:'Belanja → 1 Poin',val:'Rp '+d.tiering.bp.toLocaleString('id-ID')});
+  if(d.tiering)rows.push({label:'Nilai 1 Poin',val:'Rp '+d.tiering.np.toLocaleString('id-ID')});
+  if(d.hppPct!==undefined)rows.push({label:'Asumsi HPP %',val:d.hppPct.toFixed(2)+'%'});
+  const el=document.getElementById('xl-preview');
+  document.getElementById('xl-preview-rows').innerHTML=rows.map(r=>`<div class="xl-prow"><span>${r.label}</span><span>${r.val}</span></div>`).join('');
+  el.classList.add('show');
+}
+function xlApply(){
+  if(!xlParsed)return;
+  const d=xlParsed;
+  if(d.products&&d.products.length>0){P.length=0;d.products.forEach(p=>P.push(p));}
+  if(d.tiering){const setRp=(id,val)=>{const el=document.getElementById(id);if(el)el.value='Rp '+val.toLocaleString('id-ID');};setRp('t-bp',d.tiering.bp);setRp('p-bp',d.tiering.bp);setRp('t-np',d.tiering.np);setRp('p-np',d.tiering.np);}
+  if(d.hppPct!==undefined){const el=document.getElementById('p-hpp');if(el)el.value=d.hppPct.toFixed(2);}
+  initDash();renderMaster();calcT();calcP();renderRw();cbRender();
+  sbSave();xlClose();
+  xlToast('✅ Data berhasil diupdate dari Excel! '+(d.products?.length||0)+' produk.');
+}
+function xlToast(msg){const el=document.getElementById('xl-toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3500);}
+
+// ═══════════════════════════════════════════
+// BRANCH COMPARISON
+// ═══════════════════════════════════════════
+const LS_KEY_BRANCH = 'taobun_branch_v1';
+let bcChart = null;
+
+function bcHandleInput(el) {
+  el.value = formatNumber(el.value);
+  bcCalculate();
+}
+function bcRestoreIfEmpty(el) {
+  if (el.value === '') { el.value = '0'; bcCalculate(); }
+}
+
+function bcGet(id) { return cleanNumber(document.getElementById(id)?.value || '0'); }
+
+function bcRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+function bcPct(n) { return (n * 100).toFixed(1) + '%'; }
+
+function bcWinnerBadge(winner) {
+  if (winner === 'tie') return '<span class="branch-winner winner-tie">= Sama</span>';
+  if (winner === 'raya') return '<span class="branch-winner winner-raya">🟣 Raya</span>';
+  if (winner === 'perdos') return '<span class="branch-winner winner-perdos">🟢 Perdos</span>';
+  return '<span class="branch-winner winner-kemboja">🟡 Kemboja</span>';
+}
+
+function bcDelta(a, b, fmt = 'rp') {
+  const diff = a - b;
+  if (diff === 0) return '<span class="delta-neu">—</span>';
+  const abs = Math.abs(diff);
+  const label = fmt === 'pct' ? bcPct(abs)
+              : fmt === 'num' ? abs.toLocaleString('id-ID')
+              : bcRp(abs);
+  return diff > 0
+    ? `<span class="delta-pos">+${label}</span>`
+    : `<span class="delta-neg">-${label}</span>`;
+}
+
+function bcBestOf3(r, k, p, higherIsBetter = true) {
+  const vals = [['raya', r], ['kemboja', k], ['perdos', p]];
+  if (higherIsBetter) vals.sort((a,b) => b[1] - a[1]);
+  else vals.sort((a,b) => a[1] - b[1]);
+  if (vals[0][1] === vals[1][1]) return 'tie';
+  return vals[0][0];
+}
+
+function bcCalculate() {
+  const r = {
+    rev:    bcGet('br-raya-rev'),
+    cust:   bcGet('br-raya-cust'),
+    tx:     bcGet('br-raya-tx'),
+    basket: bcGet('br-raya-basket'),
+    new_c:  bcGet('br-raya-new'),
+    cogs:   bcGet('br-raya-cogs'),
+  };
+  const k = {
+    rev:    bcGet('br-kemb-rev'),
+    cust:   bcGet('br-kemb-cust'),
+    tx:     bcGet('br-kemb-tx'),
+    basket: bcGet('br-kemb-basket'),
+    new_c:  bcGet('br-kemb-new'),
+    cogs:   bcGet('br-kemb-cogs'),
+  };
+  const p = {
+    rev:    bcGet('br-perd-rev'),
+    cust:   bcGet('br-perd-cust'),
+    tx:     bcGet('br-perd-tx'),
+    basket: bcGet('br-perd-basket'),
+    new_c:  bcGet('br-perd-new'),
+    cogs:   bcGet('br-perd-cogs'),
+  };
+
+  // Derived metrics
+  r.gm = r.rev > 0 ? (r.rev - r.cogs) / r.rev : 0;
+  k.gm = k.rev > 0 ? (k.rev - k.cogs) / k.rev : 0;
+  p.gm = p.rev > 0 ? (p.rev - p.cogs) / p.rev : 0;
+  r.atv = r.tx > 0 ? r.rev / r.tx : 0;
+  k.atv = k.tx > 0 ? k.rev / k.tx : 0;
+  p.atv = p.tx > 0 ? p.rev / p.tx : 0;
+  r.retRate = r.cust > 0 ? (r.cust - r.new_c) / r.cust : 0;
+  k.retRate = k.cust > 0 ? (k.cust - k.new_c) / k.cust : 0;
+  p.retRate = p.cust > 0 ? (p.cust - p.new_c) / p.cust : 0;
+  r.revPerCust = r.cust > 0 ? r.rev / r.cust : 0;
+  k.revPerCust = k.cust > 0 ? k.rev / k.cust : 0;
+  p.revPerCust = p.cust > 0 ? p.rev / p.cust : 0;
+
+  // KPI cards
+  const totalRev = r.rev + k.rev + p.rev;
+  document.getElementById('bc-total-rev').textContent = bcRp(totalRev);
+  document.getElementById('bc-total-cust').textContent = (r.cust + k.cust + p.cust).toLocaleString('id-ID');
+
+  const revs = [['Raya','#6366f1',r.rev], ['Kemboja','#f59e0b',k.rev], ['Perdos','#10b981',p.rev]];
+  revs.sort((a,b) => b[2] - a[2]);
+  document.getElementById('bc-rev-leader').innerHTML = `<span style="color:${revs[0][1]}">${revs[0][0]}</span>`;
+  document.getElementById('bc-rev-diff').textContent = revs[0][2] > revs[1][2] ? `Unggul ${bcRp(revs[0][2] - revs[1][2])} vs no.2` : 'Semua sama';
+
+  const gms = [['Raya','#6366f1',r.gm], ['Kemboja','#f59e0b',k.gm], ['Perdos','#10b981',p.gm]];
+  gms.sort((a,b) => b[2] - a[2]);
+  document.getElementById('bc-gm-leader').innerHTML = `<span style="color:${gms[0][1]}">${gms[0][0]} ${bcPct(gms[0][2])}</span>`;
+  document.getElementById('bc-gm-diff').textContent = `Selisih vs no.2: ${bcPct(Math.abs(gms[0][2] - gms[1][2]))}`;
+
+  // Comparison table
+  const metrics = [
+    { label: 'Revenue',           rVal: bcRp(r.rev),           kVal: bcRp(k.rev),           pVal: bcRp(p.rev),           winner: bcBestOf3(r.rev, k.rev, p.rev) },
+    { label: 'Gross Profit',      rVal: bcRp(r.rev-r.cogs),    kVal: bcRp(k.rev-k.cogs),    pVal: bcRp(p.rev-p.cogs),    winner: bcBestOf3(r.rev-r.cogs, k.rev-k.cogs, p.rev-p.cogs) },
+    { label: 'Gross Margin %',    rVal: bcPct(r.gm),           kVal: bcPct(k.gm),           pVal: bcPct(p.gm),           winner: bcBestOf3(r.gm, k.gm, p.gm) },
+    { label: 'Active Customers',  rVal: r.cust.toLocaleString('id-ID'), kVal: k.cust.toLocaleString('id-ID'), pVal: p.cust.toLocaleString('id-ID'), winner: bcBestOf3(r.cust, k.cust, p.cust) },
+    { label: 'Transactions',      rVal: r.tx.toLocaleString('id-ID'),   kVal: k.tx.toLocaleString('id-ID'),   pVal: p.tx.toLocaleString('id-ID'),   winner: bcBestOf3(r.tx, k.tx, p.tx) },
+    { label: 'Avg Transaction',   rVal: bcRp(r.atv),           kVal: bcRp(k.atv),           pVal: bcRp(p.atv),           winner: bcBestOf3(r.atv, k.atv, p.atv) },
+    { label: 'Avg Basket',        rVal: bcRp(r.basket),        kVal: bcRp(k.basket),        pVal: bcRp(p.basket),        winner: bcBestOf3(r.basket, k.basket, p.basket) },
+    { label: 'Rev / Customer',    rVal: bcRp(r.revPerCust),    kVal: bcRp(k.revPerCust),    pVal: bcRp(p.revPerCust),    winner: bcBestOf3(r.revPerCust, k.revPerCust, p.revPerCust) },
+    { label: 'New Customers',     rVal: r.new_c.toLocaleString('id-ID'), kVal: k.new_c.toLocaleString('id-ID'), pVal: p.new_c.toLocaleString('id-ID'), winner: bcBestOf3(r.new_c, k.new_c, p.new_c) },
+    { label: 'Retention Rate',    rVal: bcPct(r.retRate),      kVal: bcPct(k.retRate),      pVal: bcPct(p.retRate),      winner: bcBestOf3(r.retRate, k.retRate, p.retRate) },
+    { label: 'COGS / HPP',        rVal: bcRp(r.cogs),          kVal: bcRp(k.cogs),          pVal: bcRp(p.cogs),          winner: bcBestOf3(r.cogs, k.cogs, p.cogs, false) },
+  ];
+
+  document.getElementById('bc-table-body').innerHTML = metrics.map(m => `
+    <tr>
+      <td class="bc-metric-name">${m.label}</td>
+      <td class="bc-val-raya">${m.rVal}</td>
+      <td class="bc-val-kemboja">${m.kVal}</td>
+      <td class="bc-val-perdos">${m.pVal}</td>
+      <td>${bcWinnerBadge(m.winner)}</td>
+    </tr>`).join('');
+
+  bcUpdateChart(r, k, p);
+  bcSave(r, k, p);
+}
+
+function bcUpdateChart(r, k, p) {
+  if (typeof Chart === 'undefined') return;
+  const isDark = document.body.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#adb5bd' : '#6c757d';
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+  const labels = ['Revenue', 'Gross Profit', 'COGS'];
+  const rayaData = [r.rev, r.rev - r.cogs, r.cogs];
+  const kembData = [k.rev, k.rev - k.cogs, k.cogs];
+  const perdData = [p.rev, p.rev - p.cogs, p.cogs];
+
+  if (!bcChart) {
+    bcChart = new Chart(document.getElementById('bcChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Raya',    data: rayaData, backgroundColor: 'rgba(99,102,241,0.8)',  borderRadius: 8 },
+          { label: 'Kemboja', data: kembData, backgroundColor: 'rgba(245,158,11,0.8)',  borderRadius: 8 },
+          { label: 'Perdos',  data: perdData, backgroundColor: 'rgba(16,185,129,0.8)',  borderRadius: 8 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', labels: { color: textColor, font: { family: 'Plus Jakarta Sans', weight: '700' }, padding: 16 } },
+          datalabels: { display: false }
+        },
+        scales: {
+          x: { ticks: { color: textColor, font: { weight: '700' } }, grid: { color: gridColor } },
+          y: { beginAtZero: true, ticks: { color: textColor, callback: v => 'Rp' + formatShortNumber(v) }, grid: { color: gridColor } }
+        }
+      }
+    });
+  } else {
+    bcChart.data.datasets[0].data = rayaData;
+    bcChart.data.datasets[1].data = kembData;
+    if (bcChart.data.datasets[2]) bcChart.data.datasets[2].data = perdData;
+    bcChart.options.plugins.legend.labels.color = textColor;
+    bcChart.options.scales.x.ticks.color = textColor;
+    bcChart.options.scales.x.grid.color = gridColor;
+    bcChart.options.scales.y.ticks.color = textColor;
+    bcChart.options.scales.y.grid.color = gridColor;
+    bcChart.update();
+  }
+}
+
+function bcSave(r, k, p) {
+  const data = {};
+  const fields = ['rev','cust','tx','basket','new_c','cogs'];
+  fields.forEach(f => {
+    const sfx = f === 'new_c' ? 'new' : f;
+    data[`raya_${f}`] = document.getElementById(`br-raya-${sfx}`)?.value || '0';
+    data[`kemb_${f}`] = document.getElementById(`br-kemb-${sfx}`)?.value || '0';
+    data[`perd_${f}`] = document.getElementById(`br-perd-${sfx}`)?.value || '0';
+  });
+  try { localStorage.setItem(LS_KEY_BRANCH, JSON.stringify(data)); } catch(e) {}
+}
+
+function bcLoad() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_BRANCH);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    const map = { rev: 'rev', cust: 'cust', tx: 'tx', basket: 'basket', new_c: 'new', cogs: 'cogs' };
+    Object.entries(map).forEach(([key, sfx]) => {
+      const rEl = document.getElementById(`br-raya-${sfx}`);
+      const kEl = document.getElementById(`br-kemb-${sfx}`);
+      const pEl = document.getElementById(`br-perd-${sfx}`);
+      if (rEl && d[`raya_${key}`]) rEl.value = d[`raya_${key}`];
+      if (kEl && d[`kemb_${key}`]) kEl.value = d[`kemb_${key}`];
+      if (pEl && d[`perd_${key}`]) pEl.value = d[`perd_${key}`];
+    });
+    bcCalculate();
+  } catch(e) {}
+}
+
+function bcReset() {
+  showConfirm({
+    icon: '🗑️', title: 'Reset Branch Data?',
+    msg: 'Semua data ketiga cabang akan dikosongkan.',
+    okLabel: 'Reset'
+  }, function() {
+    ['rev','cust','tx','basket','new','cogs'].forEach(f => {
+      ['raya','kemb','perd'].forEach(b => {
+        const el = document.getElementById(`br-${b}-${f}`);
+        if (el) el.value = '0';
+      });
+    });
+    try { localStorage.removeItem(LS_KEY_BRANCH); } catch(e) {}
+    bcCalculate();
+    xlToast('✅ Data ketiga cabang berhasil direset.');
+  });
+}
+
+// ═══════════════════════════════════════════
+// Init sobun on load
+// ═══════════════════════════════════════════
+function initSobun(){
+  initDash();renderMaster();calcT();calcP();renderRw();cbRender();sbLoad();
+}
+
+window.onload = () => {
+    // Sync anti-flash theme from <html> to <body> immediately
+    const savedTheme = document.documentElement.getAttribute('data-theme');
+    if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
+    else document.body.setAttribute('data-theme', 'light');
+
+    // Build month/year dropdowns
+    const monthContainers = document.querySelectorAll('.month-options-list');
+    monthContainers.forEach(container => {
+        months.forEach(m => {
+            let d = document.createElement('div'); d.className = 'option-item'; d.textContent = m.l;
+            d.onclick = () => selectOption('Month', m.v, m.l);
+            container.appendChild(d);
+        });
+    });
+
+    const yearContainers = document.querySelectorAll('.year-options-list');
+    yearContainers.forEach(container => {
+        for(let i=2026; i<=2030; i++) { 
+            let d = document.createElement('div'); d.className = 'option-item'; d.textContent = i;
+            d.onclick = () => selectOption('Year', i.toString(), i.toString());
+            container.appendChild(d);
+        }
+    });
+
+    // Init core dashboard first (fast), defer heavy Sobun init slightly
+    initCharts();
+    loadData();
+    // Apply correct chart colors after theme is loaded from localStorage
+    updateChartTheme();
+
+    // Keybind logic
+    const inputs = Array.from(document.querySelectorAll('.nav-input, .lead-field'));
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); if (inputs[index+1]) inputs[index+1].focus(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); if (inputs[index-1]) inputs[index-1].focus(); }
+        });
+    });
+
+    // Defer Sobun init to next frame so home view renders first
+    requestAnimationFrame(() => {
+        initSobun();
+        bcLoad();
+    });
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-select-container')) {
+            document.querySelectorAll('.custom-select-container').forEach(c => c.classList.remove('active'));
+        }
+    });
+};
+</script>
+
+<!-- Custom Confirm Modal — placed last in body to guarantee top z-index -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-modal">
+    <div class="confirm-icon" id="confirmIcon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle">Konfirmasi</div>
+    <div class="confirm-msg" id="confirmMsg">Apakah kamu yakin?</div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="confirmResolve(false)">Batal</button>
+      <button class="confirm-ok" id="confirmOkBtn" onclick="confirmResolve(true)">Reset</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
