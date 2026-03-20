@@ -109,7 +109,10 @@ section {
   min-height: 100vh;
   justify-content: center; align-items: center;
   text-align: center;
-  background: radial-gradient(ellipse 80% 60% at 50% 70%, rgba(214,30,48,0.08) 0%, transparent 70%);
+  background: 
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(214,30,48,0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 30% at 20% 30%, rgba(214,30,48,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 80% 20%, rgba(230,168,23,0.04) 0%, transparent 60%);
 }
 
 .hero-eyebrow {
@@ -377,9 +380,16 @@ section {
   background: var(--dark3); padding: 36px 28px;
   border-right: 1px solid rgba(255,255,255,0.06);
   border-bottom: 1px solid rgba(255,255,255,0.06);
-  transition: background .25s;
+  transition: background .25s, box-shadow .3s;
+  position: relative; overflow: hidden;
 }
-.grid-card:hover { background: rgba(255,255,255,0.04); }
+.grid-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 80% at 50% 120%, rgba(214,30,48,0.07), transparent);
+  opacity: 0; transition: opacity .4s;
+}
+.grid-card:hover { background: rgba(255,255,255,0.03); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); }
+.grid-card:hover::before { opacity: 1; }
 .grid-card:nth-child(3n) { border-right: none; }
 .grid-card:nth-last-child(-n+3) { border-bottom: none; }
 .grid-icon {
@@ -388,11 +398,13 @@ section {
   margin-bottom: 16px; font-size: 20px;
 }
 .grid-card-title { font-size: 16px; font-weight: 800; margin-bottom: 8px; letter-spacing: -.3px; }
-.grid-card-desc { font-size: 13px; color: var(--muted); line-height: 1.7; font-weight: 300; }
+.grid-card-desc { font-size: 13px; color: var(--muted); line-height: 1.75; font-weight: 300; }
 
 /* ── FINALE ── */
 .finale {
-  background: radial-gradient(ellipse 100% 80% at 50% 50%, rgba(214,30,48,0.12) 0%, transparent 70%);
+  background: 
+    radial-gradient(ellipse 80% 60% at 50% 60%, rgba(214,30,48,0.16) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(214,30,48,0.08) 0%, transparent 60%);
   text-align: center; min-height: 100vh;
   justify-content: center;
 }
@@ -487,12 +499,12 @@ section {
 
 <!-- Nav -->
 <nav id="nav">
-  <div class="nav-logo">TAO<span>BUN</span></div>
+  <div class="nav-logo">TAO<span>BUN</span> <span style="font-size:9px;letter-spacing:2px;opacity:.4;font-weight:400">TMS</span></div>
   <div class="nav-links">
     <a href="#revenue">Revenue</a>
     <a href="#branch">Cabang</a>
     <a href="#loyalty">Loyalty</a>
-    <a href="#finale">Mulai</a>
+    <a href="#finale">Buka TMS</a>
   </div>
 </nav>
 
@@ -507,9 +519,9 @@ section {
     <span class="line2">Management</span>
     <span class="line3">Suite</span>
   </h1>
-  <p class="hero-sub">Satu platform untuk mengelola revenue, menganalisis lead, membandingkan cabang, dan menjalankan loyalty program — semua dalam satu layar.</p>
+  <p class="hero-sub">Bukan spreadsheet. Bukan aplikasi mahal. Ini sistem operasional yang dibangun khusus untuk Taobun — revenue, cabang, lead, dan loyalty dalam satu platform.</p>
   <a href="#revenue" class="hero-cta">
-    Jelajahi Fitur
+    Jelajahi Sistem
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
   </a>
 
@@ -535,8 +547,8 @@ section {
       <div class="stat-label">Cabang Aktif</div>
     </div>
     <div class="stat-item reveal delay-3">
-      <div class="stat-num">1<span>x</span></div>
-      <div class="stat-label">File HTML</div>
+      <div class="stat-num">1<span>×</span></div>
+      <div class="stat-label">Platform. Zero Install.</div>
     </div>
   </div>
 </section>
@@ -547,11 +559,11 @@ section {
   <div class="feature">
     <div class="feature-content reveal-left">
       <div class="feature-tag">01 — Revenue</div>
-      <h2 class="feature-title">Semua angka penting, <em>seketika</em></h2>
-      <p class="feature-desc">Input data leads, basket size, dan frekuensi transaksi — sistem langsung kalkulasi revenue aktual dan proyeksi pertumbuhan real-time.</p>
+      <h2 class="feature-title">Angka bicara, <em>bukan ditebak</em></h2>
+      <p class="feature-desc">Input leads, basket size, dan frekuensi transaksi sekali — sistem langsung tunjukkan revenue aktual, proyeksi pertumbuhan, dan insight bisnis secara real-time. Tidak ada lagi drama akhir bulan.</p>
       <div class="feature-pills">
         <span class="pill">Revenue Aktual</span>
-        <span class="pill">Proyeksi 3x Growth</span>
+        <span class="pill">Proyeksi 3× Growth</span>
         <span class="pill">Customer Funnel</span>
         <span class="pill">Insight Otomatis</span>
       </div>
@@ -581,22 +593,22 @@ section {
   <div class="marquee-track" id="marqueeTrack">
     <div class="marquee-item"><div class="marquee-dot"></div>Revenue Dashboard</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Lead Management</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Branch Comparison</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>3-Cabang Comparison</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Sobat Taobun</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Loyalty Tiering</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Simulasi Promo</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Master Produk</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>JSON Backup</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Zero Install</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Dark Mode</div>
     <!-- duplicate -->
     <div class="marquee-item"><div class="marquee-dot"></div>Revenue Dashboard</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Lead Management</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>Branch Comparison</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>3-Cabang Comparison</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Sobat Taobun</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Loyalty Tiering</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Simulasi Promo</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Master Produk</div>
-    <div class="marquee-item"><div class="marquee-dot"></div>JSON Backup</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Zero Install</div>
     <div class="marquee-item"><div class="marquee-dot"></div>Dark Mode</div>
   </div>
 </section>
@@ -606,8 +618,8 @@ section {
   <div class="feature reverse">
     <div class="feature-content reveal-right">
       <div class="feature-tag">02 — Rev. Comparison</div>
-      <h2 class="feature-title">Tiga cabang, <em>satu pandangan</em></h2>
-      <p class="feature-desc">Bandingkan performa Raya, Kemboja, dan Perdos secara berdampingan. Revenue, gross margin, retention rate — semua terlihat jelas siapa yang unggul.</p>
+      <h2 class="feature-title">Tiga cabang, <em>satu keputusan</em></h2>
+      <p class="feature-desc">Raya, Kemboja, Perdos — berdampingan langsung. Revenue, gross margin, retention rate, hingga rev per customer dihitung otomatis. Sistem pilih siapa yang unggul, kamu yang ambil tindakan.</p>
       <div class="feature-pills">
         <span class="pill">Taobun Raya</span>
         <span class="pill">Taobun Kemboja</span>
@@ -648,9 +660,9 @@ section {
 <!-- ═══════════ CINEMA TEXT ═══════════ -->
 <section class="cinema-section">
   <h2 class="cinema-headline reveal">
-    Bukan sekadar spreadsheet.<br>
-    <span class="accent">Ini command center</span><br>
-    <span class="thin">bisnis kamu.</span>
+    Bukan spreadsheet.<br>
+    <span class="accent">Ini sistem yang</span><br>
+    <span class="thin">bekerja untuk kamu.</span>
   </h2>
 </section>
 
@@ -660,8 +672,8 @@ section {
   <div class="feature">
     <div class="feature-content reveal-left">
       <div class="feature-tag">03 — Sobat Taobun</div>
-      <h2 class="feature-title">Loyalty yang <em>menguntungkan</em></h2>
-      <p class="feature-desc">Sistem poin, 4 tier membership, simulasi promo, dan analisa profitabilitas per produk. Dirancang agar setiap reward tetap margin-positif.</p>
+      <h2 class="feature-title">Pelanggan setia, <em>margin terjaga</em></h2>
+      <p class="feature-desc">Sistem poin dengan 4 tier membership, simulasi promo sebelum dijalankan, dan analisa profitabilitas per produk. Setiap reward dirancang agar tidak boncos — karena loyalty yang baik harus tetap menguntungkan.</p>
       <div class="feature-pills">
         <span class="pill">🥉 Bronze · 🥈 Silver</span>
         <span class="pill">🥇 Gold · 💎 Platinum</span>
@@ -703,37 +715,37 @@ section {
 
 <!-- ═══════════ FEATURE GRID ═══════════ -->
 <section class="grid-section">
-  <h2 class="grid-title reveal">Dibangun untuk <span style="color:var(--red)">pergerakan</span> sehari-hari</h2>
+  <h2 class="grid-title reveal">Dibangun untuk <span style="color:var(--red)">ritme harian</span> Taobun</h2>
   <div class="feature-grid">
     <div class="grid-card reveal delay-1">
       <div class="grid-icon" style="background:rgba(214,30,48,0.12)">📊</div>
       <div class="grid-card-title">Revenue Simulasi</div>
-      <div class="grid-card-desc">Proyeksikan target pertumbuhan dengan slider interaktif. Lihat angka berubah real-time.</div>
+      <div class="grid-card-desc">Geser slider, angka langsung berubah. Proyeksi pertumbuhan terasa nyata — bukan sekadar asumsi di kertas.</div>
     </div>
     <div class="grid-card reveal delay-2">
       <div class="grid-icon" style="background:rgba(16,185,129,0.12)">🎯</div>
       <div class="grid-card-title">Lead Funnel</div>
-      <div class="grid-card-desc">Dari reach hingga payment — analisa konversi di setiap tahap dengan presisi.</div>
+      <div class="grid-card-desc">Dari reach hingga payment — tahu persis di mana konversi bocor dan berapa persen yang berhasil bayar.</div>
     </div>
     <div class="grid-card reveal delay-3">
       <div class="grid-icon" style="background:rgba(99,102,241,0.12)">🏪</div>
       <div class="grid-card-title">3-Cabang Compare</div>
-      <div class="grid-card-desc">Raya, Kemboja, Perdos — side by side dengan 11 metrik dan otomatis pilih pemenang.</div>
+      <div class="grid-card-desc">Raya, Kemboja, Perdos — berdampingan. 11 metrik, sistem otomatis tunjuk siapa pemenang bulan ini.</div>
     </div>
     <div class="grid-card reveal delay-1">
       <div class="grid-icon" style="background:rgba(230,168,23,0.12)">☕</div>
       <div class="grid-card-title">Sobat Taobun</div>
-      <div class="grid-card-desc">Loyalty program lengkap dengan kalkulasi poin, tier multiplier, dan simulasi reward.</div>
+      <div class="grid-card-desc">Loyalty bukan sekadar poin. Tier multiplier, kalkulator reward, dan simulasi sebelum promo dijalankan.</div>
     </div>
     <div class="grid-card reveal delay-2">
       <div class="grid-icon" style="background:rgba(239,68,68,0.12)">🧮</div>
       <div class="grid-card-title">Profitabilitas</div>
-      <div class="grid-card-desc">Setiap produk dan promo dihitung margin-nya. Tidak ada promo yang boncos tanpa disadari.</div>
+      <div class="grid-card-desc">Setiap produk dihitung marginnya. Tidak ada promo yang boncos tanpa disadari — sistem peringatkan lebih dulu.</div>
     </div>
     <div class="grid-card reveal delay-3">
       <div class="grid-icon" style="background:rgba(168,85,247,0.12)">💾</div>
       <div class="grid-card-title">Backup & Restore</div>
-      <div class="grid-card-desc">Ekspor semua data ke JSON, impor kapan saja. Data aman meski ganti browser.</div>
+      <div class="grid-card-desc">Ekspor seluruh data ke JSON satu klik. Ganti perangkat, pindah browser — data tetap aman dan siap dipulihkan.</div>
     </div>
   </div>
 </section>
@@ -742,13 +754,13 @@ section {
 <section class="finale" id="finale">
   <p class="finale-label reveal">Siap digunakan hari ini</p>
   <h2 class="finale-title reveal">
-    <span class="dim">Satu file.</span>
+    <span class="dim">Satu platform.</span>
     Semua yang
-    kamu butuhkan.
+    Taobun butuhkan.
   </h2>
-  <p class="finale-sub reveal">Buka di browser, tidak perlu install, tidak perlu server. TAOBUN Management Suite berjalan langsung dari satu file HTML.</p>
+  <p class="finale-sub reveal">Buka di browser, langsung jalan. Tidak perlu install, tidak perlu server, tidak perlu langganan. TMS diakses dari mana saja — laptop, HP, tablet.</p>
   <button class="finale-btn reveal" onclick="window.open('app.html', '_blank')">
-    Buka Aplikasi
+    Buka TMS
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
   </button>
   <p class="finale-year">TAOBUN © 2026 · CV. Roti Semua Generasi</p>
