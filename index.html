@@ -506,6 +506,12 @@ section {
     <a href="#branch">Cabang</a>
     <a href="#loyalty">Loyalty</a>
     <a href="#finale">Buka Sistem</a>
+    <button id="musicBtn" onclick="toggleMusic()" title="Music" style="
+      background:none; border:1px solid rgba(255,255,255,0.15); color:rgba(255,255,255,0.4);
+      width:30px; height:30px; border-radius:50%; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:13px; transition:all .2s; flex-shrink:0;
+    ">♪</button>
   </div>
 </nav>
 
@@ -854,24 +860,29 @@ document.querySelectorAll('.stat-item').forEach(el => statObserver.observe(el));
   <source src="audio__music_.mp3" type="audio/mpeg">
 </audio>
 <script>
-(function() {
-  const audio = document.getElementById('bgAudio');
-  audio.volume = 0.3;
-  let started = false;
+const bgAudio   = document.getElementById('bgAudio');
+const musicBtn  = document.getElementById('musicBtn');
+bgAudio.volume  = 0.35;
+let musicOn     = false;
 
-  function tryPlay() {
-    if (started) return;
-    audio.play().then(() => {
-      started = true;
+function toggleMusic() {
+  if (!musicOn) {
+    bgAudio.play().then(() => {
+      musicOn = true;
+      musicBtn.textContent = '♫';
+      musicBtn.style.color  = 'var(--red)';
+      musicBtn.style.borderColor = 'var(--red)';
+      musicBtn.style.boxShadow = '0 0 12px rgba(214,30,48,0.4)';
     }).catch(() => {});
+  } else {
+    bgAudio.pause();
+    musicOn = false;
+    musicBtn.textContent = '♪';
+    musicBtn.style.color = 'rgba(255,255,255,0.4)';
+    musicBtn.style.borderColor = 'rgba(255,255,255,0.15)';
+    musicBtn.style.boxShadow = 'none';
   }
-
-  ['click','touchstart','mousedown','keydown','scroll','pointerdown'].forEach(ev => {
-    document.addEventListener(ev, function handler(e) {
-      tryPlay();
-    }, { once: false, capture: true, passive: true });
-  });
-})();
+}
 </script>
 </body>
 </html>
