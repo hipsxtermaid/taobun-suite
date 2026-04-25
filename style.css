@@ -23,8 +23,8 @@ body[data-theme="dark"],
   --bg: #0f1115;
   --card: #1a1d23;
   --border: #2d3139;
-  --text: #f1f3f5;
-  --muted: #adb5bd;
+  --text: #ffffff;
+  --muted: #c4c9d0;
   --primary-light: rgba(214, 30, 48, 0.15);
 }
 
@@ -33,7 +33,7 @@ body {
   background: var(--bg);
   color: var(--text);
   padding: 20px;
-  transition: background 0.5s ease;
+  transition: background 0.5s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: contain;
 }
@@ -119,7 +119,7 @@ input.nav-input:focus {
 
 header.main-header { margin-bottom: 30px; position: relative; padding-top: 50px; text-align: center; display: flex; flex-direction: column; align-items: center; }
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.dashboard-title { font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--text); }
+.dashboard-title { font-size: 14px; font-weight: 800; text-transform: uppercase; color: var(--text); transition: color 0.3s ease; }
 .dashboard-title span { color: var(--primary); }
 
 .badge { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--primary); background: var(--primary-light); padding: 8px 16px; border-radius: 100px; margin-bottom: 16px; border: 1px solid rgba(214, 30, 48, 0.1); }
@@ -143,6 +143,7 @@ button.menu-card, button.select-trigger {
   background: none;
   border: none;
   width: 100%;
+  color: var(--text);
 }
 button.menu-card {
   background: var(--card);
@@ -154,8 +155,9 @@ button.menu-card {
   background: var(--card); border: 1px solid var(--border); 
   padding: 22px 18px 20px;
   border-radius: var(--radius); cursor: pointer; 
+  color: var(--text);
   display: flex; flex-direction: column; align-items: flex-start; gap: 14px; 
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.15s ease; 
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.15s ease, background 0.3s ease, color 0.3s ease; 
   box-shadow: var(--shadow);
 }
 .menu-card h3 { font-size: 14px; font-weight: 800; margin: 0; }
@@ -189,7 +191,7 @@ button.menu-card {
   background: var(--card); border: 1px solid var(--border); padding: 12px 22px; 
   border-radius: 100px; font-weight: 700; font-size: 12px; cursor: pointer; 
   color: var(--muted); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 6px;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); min-height: 44px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease, color 0.3s ease; min-height: 44px;
 }
 .back-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-light); transform: translateX(-3px); }
 .back-btn:active { transform: translateX(-1px) scale(0.97); }
@@ -230,7 +232,8 @@ button.menu-card {
 .section-group { 
   background: var(--card); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; 
   border: 1px solid var(--border); box-shadow: var(--shadow); position: relative;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  color: var(--text);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.3s ease, color 0.3s ease;
 }
 .section-group:hover { box-shadow: 0 14px 36px -6px rgba(0,0,0,0.08); }
 .section-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; display: block; border-left: 3px solid var(--primary); padding-left: 10px; }
@@ -261,7 +264,7 @@ button.menu-card {
 input[type="range"] { width: 100%; height: 6px; background: var(--border); border-radius: 5px; outline: none; -webkit-appearance: none; cursor: pointer; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; }
 
-.chart-box { background: var(--card); border-radius: var(--radius); padding: 24px; margin-top: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); position: relative; }
+.chart-box { background: var(--card); border-radius: var(--radius); padding: 24px; margin-top: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); position: relative; color: var(--text); transition: background 0.3s ease, color 0.3s ease; }
 .chart-title { font-size: 12px; font-weight: 800; text-align: center; margin-bottom: 20px; text-transform: uppercase; color: var(--muted); }
 .chart-container { height: 260px; position: relative; }
 
@@ -626,7 +629,7 @@ input.nav-input.input-error {
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center;
   padding: 0 12px; height: 52px;
-  transition: background 0.5s ease;
+  transition: background 0.5s ease, color 0.3s ease;
   gap: 4px;
   overflow: hidden;
 }
@@ -1023,3 +1026,52 @@ input[type="number"] { -moz-appearance: textfield; }
 /* badge on import button when locked */
 .btn-import-locked { background:var(--bg)!important; color:var(--muted)!important; border-color:var(--border)!important; }
 
+
+/* ══════════════════════════════════════════
+   DARK MODE — EXPLICIT TEXT COLOR OVERRIDES
+   Fixes browser button/input default color 
+   not inheriting from body in dark mode
+══════════════════════════════════════════ */
+[data-theme="dark"] .menu-card,
+[data-theme="dark"] .menu-card h3,
+[data-theme="dark"] .menu-card .menu-sub,
+[data-theme="dark"] .section-group,
+[data-theme="dark"] .deck-title,
+[data-theme="dark"] .dashboard-title,
+[data-theme="dark"] .chart-box,
+[data-theme="dark"] .chart-title,
+[data-theme="dark"] .back-btn,
+[data-theme="dark"] .select-trigger,
+[data-theme="dark"] .option-item,
+[data-theme="dark"] .history-entry-period,
+[data-theme="dark"] .target-branch-label,
+[data-theme="dark"] .tpc-branch,
+[data-theme="dark"] .section-label,
+[data-theme="dark"] .history-title,
+[data-theme="dark"] .period-label-badge,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] p,
+[data-theme="dark"] span:not([class*="primary"]):not([class*="muted"]):not([class*="danger"]):not([class*="success"]) {
+  color: var(--text);
+}
+
+[data-theme="dark"] .menu-card .menu-sub,
+[data-theme="dark"] .muted,
+[data-theme="dark"] .chart-title,
+[data-theme="dark"] .section-label,
+[data-theme="dark"] .history-title,
+[data-theme="dark"] .target-branch-label,
+[data-theme="dark"] .tpc-branch,
+[data-theme="dark"] .tpc-label,
+[data-theme="dark"] .unit,
+[data-theme="dark"] .back-btn {
+  color: var(--muted);
+}
+
+/* All buttons in dark mode inherit text color properly */
+[data-theme="dark"] button {
+  color: inherit;
+}
