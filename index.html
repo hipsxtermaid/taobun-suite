@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAOBUN Management Suite</title>
+
+<link rel="manifest" href="manifest.json">
+
+<!-- Anti-flash: terapkan tema tersimpan sebelum render pertama -->
+<script>
+  (function(){
+    try {
+      var d = localStorage.getItem('taobun_master_final_v7');
+      if (d) { var t = JSON.parse(d).theme; if (t) document.documentElement.setAttribute('data-theme', t); }
+      var d2 = localStorage.getItem('taobun_loyalty_v1');
+      if (!d && d2) { var t2 = JSON.parse(d2).theme; if (t2) document.documentElement.setAttribute('data-theme', t2); }
+    } catch(e) {}
+  })();
+</script>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TAOBUN">
+
+<!-- Stylesheet terpisah -->
+<link rel="stylesheet" href="style.css">
+
+<!-- Library eksternal (defer agar tidak block render) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2" defer></script>
+<!-- xlsx dimuat secara lazy (hanya saat fitur export/import dipakai) via loadXlsx() di app.js -->
+
+</head>
+<body>
+
+<!-- Global sticky theme toggle — single instance for entire app -->
+<button class="global-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme" id="globalThemeToggle">
+  <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+  <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+</button>
+
+<div class="container">
+  <div id="home-view" class="view-container view-active">
+    <header class="main-header">
+      <div style="position: absolute; right: 0; top: 0;">
+          <button class="theme-toggle view-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+            <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </button>
+      </div>
+      <div class="badge">CV. Roti Semua Generasi</div>
+      <h1>WELCOME TO<br><span>TAOBUN</span> MANAGEMENT SUITE</h1>
+    </header>
+    <div class="menu-grid">
+      <button class="menu-card" onclick="showView('revenue-view')" aria-label="Buka Revenue Dashboard">
+        <div class="menu-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+        <div class="menu-info"><h3>Revenue</h3><span class="menu-sub">Dashboard & Simulasi</span></div>
+      </button>
+      <button class="menu-card" onclick="showView('leads-view')" aria-label="Buka Lead Conversion">
+        <div class="menu-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div class="menu-info"><h3>Lead</h3><span class="menu-sub">Konversi Funnel</span></div>
+      </button>
+      <button class="menu-card" onclick="showView('branch-view')" aria-label="Buka Revenue Comparison">
+        <div class="menu-icon" style="background: rgba(99,102,241,0.1); color: #6366f1;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div>
+        <div class="menu-info"><h3>Rev. Comparison</h3><span class="menu-sub">Komparasi Revenue Cabang</span></div>
+      </button>
+      <button class="menu-card" onclick="showView('sobun-view')" aria-label="Buka Sobat Taobun">
+        <div class="menu-icon" style="background: rgba(230,168,23,0.12); color: #e6a817;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+        <div class="menu-info"><h3>Sobat Taobun</h3><span class="menu-sub">Loyalty & Promo</span></div>
+      </button>
+      <div class="menu-card locked">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+        <div class="menu-info"><h3>Coming Soon</h3><span class="menu-sub">Segera hadir</span></div>
+      </div>
+      <div class="menu-card locked">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 20v-10M15 20v-2M6 20v-4M18 20V4"></path></svg></div>
+        <div class="menu-info"><h3>Coming Soon</h3><span class="menu-sub">Segera hadir</span></div>
+      </div>
+      <div class="menu-card locked">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+        <div class="menu-info"><h3>Coming Soon</h3><span class="menu-sub">Segera hadir</span></div>
+      </div>
+      <div class="menu-card locked">
+        <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.5 8.5 0 0 1 4.6 1.3L21 3.5v8z"></path></svg></div>
+        <div class="menu-info"><h3>Coming Soon</h3><span class="menu-sub">Segera hadir</span></div>
+      </div>
+    </div>
+
+    <!-- Alert Banner — auto-populated from data -->
+    <div class="alert-banner-wrap" id="home-alert-wrap"></div>
+
+    <!-- Onboarding empty state -->
+    <div class="onboarding-banner" id="onboarding-banner">
+      <div class="onboarding-ico">👋</div>
+      <div class="onboarding-title">Mulai Input Data Bulan Ini</div>
+      <div class="onboarding-sub">Belum ada data yang tersimpan. Yuk, mulai dengan mengisi Branch Comparison untuk bulan ini!</div>
+      <button class="onboarding-cta" onclick="showView('branch-view')">Isi Data Sekarang →</button>
+    </div>
+  </div>
+
+  <div id="revenue-view" class="view-container">
+    <div class="dashboard-header">
+        <div class="dashboard-title"><span>TAOBUN</span> Management Suite</div>
+        <button class="theme-toggle view-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+            <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+    </div>
+    <button class="back-btn" onclick="showView('home-view')">
+      < Suite
+    </button>
+
+    <div id="insightPanel" class="insight-panel"></div>
+    <div class="hero-revenue"><p class="revenue-label">Actual Monthly Revenue</p><div class="revenue-value" id="totalRevenue">Rp 0</div></div>
+
+    <div class="date-selector">
+      <div class="custom-select-container" id="containerMonthRev">
+        <button class="select-trigger" onclick="toggleDropdown('containerMonthRev')" aria-haspopup="listbox" aria-label="Pilih Februari"><span id="selectedMonthRev">Februari</span></button>
+        <div class="select-options month-options-list"></div>
+      </div>
+      <div class="custom-select-container" id="containerYearRev">
+        <button class="select-trigger" onclick="toggleDropdown('containerYearRev')" aria-haspopup="listbox" aria-label="Pilih 2026"><span id="selectedYearRev">2026</span></button>
+        <div class="select-options year-options-list"></div>
+      </div>
+    </div>
+
+    <div class="section-group">
+      <span class="section-label">Market Performance</span>
+      <div class="deck-item"><div class="deck-title">Potential Leads</div><div class="input-wrapper"><input type="text" id="leads" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"><span class="field-error-msg" id="err-leads"></span></div></div>
+      <div class="deck-item"><div class="deck-title">Target Rate</div><div class="input-wrapper"><input type="text" id="convTargetInput" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"><span class="unit">%</span></div></div>
+      <div class="deck-item"><div class="deck-title">Active Customers</div><div class="input-wrapper"><input type="text" id="totalCustInput" class="nav-input color-primary" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title deck-title-sub">↳ Actual Conv.</div><div class="auto-val" id="actualConvDisplay" style="font-size: 14px;">0%</div></div>
+      <div class="deck-item">
+        <div class="deck-title deck-title-sub">↳ New / Retained</div>
+        <div class="input-wrapper"><span id="newCustDisplay" class="fw-800 fs-14 mr-8">0</span><span class="unit">/</span><input type="text" id="retentionCust" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)" style="width: 75px; font-size: 14px;"></div>
+      </div>
+    </div>
+
+    <div class="section-group">
+      <span class="section-label">Average Values</span>
+      <div class="deck-item"><div class="deck-title">Basket Size</div><div class="input-wrapper"><span class="unit">Rp</span><input type="text" id="basketSize" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">Avg Tx / Month</div><div class="input-wrapper"><input type="text" id="avgTx" class="nav-input" value="0" oninput="handleInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"><span class="unit">x</span></div></div>
+    </div>
+
+    <div class="section-group section-gradient">
+      <span class="section-label">Strategic Simulation</span>
+      <div class="deck-item"><div class="deck-title">Growth Ambition</div><div class="input-wrapper"><input type="text" id="optPercent" class="nav-input color-primary" value="0" oninput="syncSlider(this.value)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"><span class="unit">%</span></div></div>
+      <div class="slider-container"><input type="range" id="growthSlider" min="0" max="100" value="0" oninput="syncInput(this.value)" aria-label="Growth Ambition slider 0 sampai 100 persen" aria-describedby="optPercent"></div>
+      <div class="deck-item" style="margin-top:10px"><div class="deck-title">Projected Revenue</div><div class="auto-val auto-val-lg" id="projectedRevenueDisplay">Rp 0</div></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetMetrics()">Reset Field Data</button>
+    <div class="btn-group">
+        <button class="import-btn" onclick="document.getElementById('fileInput').click()">Import Data</button>
+        <button class="export-btn" onclick="exportToExcel()">Export Report</button>
+    </div>
+    <div class="backup-btn-group">
+        <button class="json-export-btn" onclick="exportJSON()">⬇ Backup JSON</button>
+        <button class="json-import-btn" onclick="document.getElementById('jsonFileInput').click()">⬆ Restore JSON</button>
+    </div>
+    <input type="file" id="fileInput" style="display:none" accept=".xlsx" onchange="importFromExcel(this)">
+    <input type="file" id="jsonFileInput" style="display:none" accept=".json" onchange="importFromJSON(this)">
+
+    <div class="chart-box"><p class="chart-title">Customer Funnel Analysis</p><div class="chart-container"><canvas id="funnelChart"></canvas></div></div>
+    <div class="chart-box"><p class="chart-title">Revenue Target Comparison</p><div class="chart-container"><canvas id="growthChart"></canvas></div></div>
+  </div>
+
+  <div id="leads-view" class="view-container">
+    <div class="dashboard-header">
+        <div class="dashboard-title"><span>LEAD</span> Conversion Analysis</div>
+        <button class="theme-toggle view-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme">
+            <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+    </div>
+    <button class="back-btn" onclick="showView('home-view')">
+      < Suite
+    </button>
+
+    <div class="date-selector">
+      <div class="custom-select-container" id="containerMonthLead">
+        <button class="select-trigger" onclick="toggleDropdown('containerMonthLead')" aria-haspopup="listbox" aria-label="Pilih Februari"><span id="selectedMonthLead">Februari</span></button>
+        <div class="select-options month-options-list"></div>
+      </div>
+      <div class="custom-select-container" id="containerYearLead">
+        <button class="select-trigger" onclick="toggleDropdown('containerYearLead')" aria-haspopup="listbox" aria-label="Pilih 2026"><span id="selectedYearLead">2026</span></button>
+        <div class="select-options year-options-list"></div>
+      </div>
+    </div>
+
+    <div class="section-group">
+      <span class="section-label">Funnel Metrics</span>
+      <div class="deck-item"><div class="deck-title">Reach / Impressions</div><div class="input-wrapper"><input type="text" id="reach" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">Profile Visits</div><div class="input-wrapper"><input type="text" id="visits" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">External Link Clicks</div><div class="input-wrapper"><input type="text" id="links" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">ESB Order Clicks</div><div class="input-wrapper"><input type="text" id="orders" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+      <div class="deck-item"><div class="deck-title">Success Payments</div><div class="input-wrapper"><input type="text" id="payments" class="nav-input lead-field" value="0" oninput="handleLeadInput(this)" onfocus="clearIfZero(this)" onblur="restoreIfEmpty(this)"></div></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetLeadMetrics()">Reset Funnel Data</button>
+
+    <div class="leads-results-container" id="leads-results">
+        <p style="text-align: center; color: var(--muted);">Lengkapi data di atas.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ BRANCH COMPARISON VIEW ═══════════════════════════════ -->
+  <div id="branch-view" class="view-container">
+    <div class="dashboard-header">
+      <div class="dashboard-title"><span>BRANCH</span> Comparison</div>
+    </div>
+    <button class="back-btn" onclick="showView('home-view')">
+      < Suite
+    </button>
+
+    <!-- Date selector (shared) -->
+    <div class="date-selector">
+      <div class="custom-select-container" id="containerMonthBranch">
+        <button class="select-trigger" onclick="toggleDropdown('containerMonthBranch')" aria-haspopup="listbox" aria-label="Pilih Februari"><span id="selectedMonthBranch">Februari</span></button>
+        <div class="select-options month-options-list"></div>
+      </div>
+      <div class="custom-select-container" id="containerYearBranch">
+        <button class="select-trigger" onclick="toggleDropdown('containerYearBranch')" aria-haspopup="listbox" aria-label="Pilih 2026"><span id="selectedYearBranch">2026</span></button>
+        <div class="select-options year-options-list"></div>
+      </div>
+    </div>
+
+    <!-- Period context badge -->
+    <div style="text-align:center;margin-bottom:12px">
+      <span class="period-label-badge" id="branch-period-badge">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span id="branch-period-text">Februari 2026</span>
+      </span>
+    </div>
+
+    <!-- Input panels side by side -->
+    <div class="branch-cols">
+      <div class="branch-col raya">
+        <div class="branch-col-title"><span class="dot dot-raya"></span>Taobun Raya</div>
+        <div class="branch-input-row">
+          <div class="branch-field"><label>Revenue (Rp)</label><input type="text" id="br-raya-rev"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Active Customers</label><input type="text" id="br-raya-cust"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Transactions</label><input type="text" id="br-raya-tx"    value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Avg Basket (Rp)</label><input type="text" id="br-raya-basket" value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>New Customers</label><input type="text" id="br-raya-new"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>COGS / HPP (Rp)</label><input type="text" id="br-raya-cogs"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="branch-col kemboja">
+        <div class="branch-col-title"><span class="dot dot-kemboja"></span>Taobun Kemboja</div>
+        <div class="branch-input-row">
+          <div class="branch-field"><label>Revenue (Rp)</label><input type="text" id="br-kemb-rev"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Active Customers</label><input type="text" id="br-kemb-cust"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Transactions</label><input type="text" id="br-kemb-tx"    value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Avg Basket (Rp)</label><input type="text" id="br-kemb-basket" value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>New Customers</label><input type="text" id="br-kemb-new"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>COGS / HPP (Rp)</label><input type="text" id="br-kemb-cogs"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="branch-col perdos">
+        <div class="branch-col-title"><span class="dot dot-perdos"></span>Taobun Perdos</div>
+        <div class="branch-input-row">
+          <div class="branch-field"><label>Revenue (Rp)</label><input type="text" id="br-perd-rev"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Active Customers</label><input type="text" id="br-perd-cust"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Transactions</label><input type="text" id="br-perd-tx"    value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>Avg Basket (Rp)</label><input type="text" id="br-perd-basket" value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>New Customers</label><input type="text" id="br-perd-new"   value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+          <div class="branch-field"><label>COGS / HPP (Rp)</label><input type="text" id="br-perd-cogs"  value="0" oninput="bcHandleInput(this)" onfocus="clearIfZero(this)" onblur="bcRestoreIfEmpty(this)" placeholder="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero KPI summary cards -->
+    <div class="branch-result-grid" id="bc-kpi-grid">
+      <div class="branch-stat-card">
+        <div class="bsc-label">Total Revenue</div>
+        <div class="bsc-val" id="bc-total-rev">Rp 0</div>
+        <div class="bsc-sub">Gabungan 3 cabang</div>
+      </div>
+      <div class="branch-stat-card">
+        <div class="bsc-label">Revenue Leader</div>
+        <div class="bsc-val" id="bc-rev-leader">—</div>
+        <div class="bsc-sub" id="bc-rev-diff">—</div>
+      </div>
+      <div class="branch-stat-card">
+        <div class="bsc-label">Gross Margin Leader</div>
+        <div class="bsc-val" id="bc-gm-leader">—</div>
+        <div class="bsc-sub" id="bc-gm-diff">—</div>
+      </div>
+      <div class="branch-stat-card">
+        <div class="bsc-label">Total Customers</div>
+        <div class="bsc-val" id="bc-total-cust">0</div>
+        <div class="bsc-sub">Gabungan 3 cabang</div>
+      </div>
+    </div>
+
+    <!-- Side-by-side metric table -->
+    <div class="bc-compare-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Metrik</th>
+            <th style="color:#6366f1">🟣 Raya</th>
+            <th style="color:#f59e0b">🟡 Kemboja</th>
+            <th style="color:#10b981">🟢 Perdos</th>
+            <th>Unggul</th>
+          </tr>
+        </thead>
+        <tbody id="bc-table-body">
+          <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Isi data di atas untuk melihat perbandingan</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Chart -->
+    <div class="bc-chart-wrap">
+      <div class="bc-chart-title">Revenue & Gross Profit — Raya vs Kemboja vs Perdos</div>
+      <div class="bc-chart-container"><canvas id="bcChart"></canvas></div>
+    </div>
+
+    <!-- TARGET VS AKTUAL -->
+    <div class="target-section">
+      <span class="target-section-title">🎯 Target Revenue per Cabang</span>
+      <div class="target-branch-grid">
+        <div class="target-branch-item">
+          <div class="target-branch-label" style="color:#6366f1">🟣 Raya</div>
+          <input type="text" class="target-branch-input" id="tgt-raya" placeholder="Rp 0" oninput="bcFmtTarget(this);bcRenderTargets()" onfocus="if(this.value===\'Rp 0\'||this.value===\'0\')this.value=\'\'" onblur="if(!this.value)this.value=\'Rp 0\'">
+        </div>
+        <div class="target-branch-item">
+          <div class="target-branch-label" style="color:#f59e0b">🟡 Kemboja</div>
+          <input type="text" class="target-branch-input" id="tgt-kemb" placeholder="Rp 0" oninput="bcFmtTarget(this);bcRenderTargets()" onfocus="if(this.value===\'Rp 0\'||this.value===\'0\')this.value=\'\'" onblur="if(!this.value)this.value=\'Rp 0\'">
+        </div>
+        <div class="target-branch-item">
+          <div class="target-branch-label" style="color:#10b981">🟢 Perdos</div>
+          <input type="text" class="target-branch-input" id="tgt-perd" placeholder="Rp 0" oninput="bcFmtTarget(this);bcRenderTargets()" onfocus="if(this.value===\'Rp 0\'||this.value===\'0\')this.value=\'\'" onblur="if(!this.value)this.value=\'Rp 0\'">
+        </div>
+      </div>
+      <div class="target-progress-grid" id="tgt-progress-grid"></div>
+    </div>
+
+    <!-- HISTORICAL TREND -->
+    <div class="history-section">
+      <div class="history-header">
+        <div class="history-title">📈 Tren Historis per Cabang</div>
+        <button class="history-save-btn" onclick="bcSaveSnapshot()">+ Simpan Periode Ini</button>
+      </div>
+      <div class="history-metric-tabs">
+        <button class="history-tab active" data-metric="rev" onclick="bcHistoryTab(this)">Revenue</button>
+        <button class="history-tab" data-metric="gm" onclick="bcHistoryTab(this)">Gross Margin%</button>
+        <button class="history-tab" data-metric="cust" onclick="bcHistoryTab(this)">Customers</button>
+        <button class="history-tab" data-metric="tx" onclick="bcHistoryTab(this)">Transaksi</button>
+      </div>
+      <div class="history-chart-wrap"><canvas id="historyChart"></canvas></div>
+      <div id="history-list-wrap"></div>
+    </div>
+
+    <!-- PDF Export -->
+    <button class="pdf-export-btn" onclick="bcExportPDF()">📄 Export Ringkasan PDF</button>
+
+    <button class="bc-reset-btn" onclick="bcReset()">Reset Data Branch</button>
+  </div>
+
+</div><!-- end .container -->
+
+<div id="sobun-view" class="view-container">
+
+    <div class="sobun-wrapper">
+      <!-- NAV — integrated back btn, tabs, theme toggle, import -->
+      <nav class="nav">
+        <button class="sobun-back-btn" onclick="showView('home-view')" title="Suite">
+          < Suite
+        </button>
+        <div class="nav-brand">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          Sobat TaoBun </span>
+          <span class="save-dot" id="saveDot"></span>
+        </div>
+        <div class="nav-tabs">
+          <button class="nav-tab active" onclick="sbGoto('dashboard',this)">Dashboard</button>
+          <button class="nav-tab" onclick="sbGoto('master',this)">Master Produk</button>
+          <button class="nav-tab" onclick="sbGoto('tiering',this)">Tiering</button>
+          <button class="nav-tab" onclick="sbGoto('profit',this)">Profitabilitas</button>
+          <button class="nav-tab" onclick="sbGoto('reward',this)">Reward</button>
+          <button class="nav-tab" onclick="sbGoto('promo',this)">Simulasi Promo</button>
+        </div>
+        <button class="theme-toggle sobun-view-theme-toggle" onclick="toggleTheme()" aria-label="Toggle Theme" style="margin-left:4px;flex-shrink:0;">
+          <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </nav>
+
+      <!-- DASHBOARD -->
+      <div id="sb-page-dashboard" class="page active">
+        <div class="ph"><div class="ph-title">Dashboard</div><div class="ph-sub">TaoBun Loyalty Program</div></div>
+        <div class="hero-banner mb20">
+          <div><div class="hero-banner-title">Total Produk Terdaftar</div><div class="hero-banner-val" id="hero-total-prod">64</div></div>
+          <div style="text-align:right"><div class="hero-banner-badge">4 Tier Level Aktif</div></div>
+        </div>
+        <div class="g4 mb20">
+          <div class="card stat"><div class="stat-v" style="color:var(--primary)" id="stat-total-prod">64</div><div class="stat-l">Total Produk</div></div>
+          <div class="card stat"><div class="stat-v" style="color:#e6a817">4</div><div class="stat-l">Tier Level</div></div>
+          <div class="card stat"><div class="stat-v" style="color:var(--success);font-size:20px">Rp2.000</div><div class="stat-l">Belanja → 1 Poin</div></div>
+          <div class="card stat"><div class="stat-v" style="color:var(--success);font-size:20px">Rp20</div><div class="stat-l">Nilai Tukar 1 Poin</div></div>
+        </div>
+        <div class="fx mb20">
+          <div class="fx1">
+            <div class="g2">
+              <div class="tc tc-br"><div class="tc-ico">🥉</div><div class="tc-name" style="color:#c97d2e">Bronze Bun</div><div class="tc-sub">Entry Level</div><div class="tc-mult" style="color:#c97d2e">1×</div><div class="tc-ml">Poin Multiplier</div><div class="tc-rows"><div class="tc-row"><span>Naik ke Silver</span><span id="th-br-naik">≥ Rp250rb/thn</span></div><div class="tc-row"><span>Stay</span><span>Otomatis</span></div></div></div>
+              <div class="tc tc-si"><div class="tc-ico">🥈</div><div class="tc-name" style="color:#8a96a3">Silver Bun</div><div class="tc-sub">Active</div><div class="tc-mult" style="color:#8a96a3">1.2×</div><div class="tc-ml">Poin Multiplier</div><div class="tc-rows"><div class="tc-row"><span>Naik ke Gold</span><span id="th-si-naik">≥ Rp600rb/thn</span></div><div class="tc-row"><span>Stay Silver</span><span id="th-si-stay">Rp300rb/thn</span></div></div></div>
+              <div class="tc tc-go"><div class="tc-ico">🥇</div><div class="tc-name" style="color:#e6a817">Gold Bun</div><div class="tc-sub">Loyal</div><div class="tc-mult" style="color:#e6a817">1.5×</div><div class="tc-ml">Poin Multiplier</div><div class="tc-rows"><div class="tc-row"><span>Naik ke Platinum</span><span id="th-go-naik">≥ Rp1,5jt/thn</span></div><div class="tc-row"><span>Stay Gold</span><span id="th-go-stay">Rp750rb/thn</span></div></div></div>
+              <div class="tc tc-pl"><div class="tc-ico">💎</div><div class="tc-name" style="color:#60a5fa">Platinum Bun</div><div class="tc-sub">VIP</div><div class="tc-mult" style="color:#60a5fa">2×</div><div class="tc-ml">Poin Multiplier</div><div class="tc-rows"><div class="tc-row"><span>Stay Platinum</span><span id="th-pl-stay">Rp1,8jt/thn</span></div><div class="tc-row"><span>Turun jika</span><span id="th-pl-turun">&lt; Rp1,8jt</span></div></div></div>
+            </div>
+          </div>
+          <div class="card" style="min-width:270px;max-width:290px;flex-shrink:0;">
+            <div class="card-title">Kalkulator Poin</div>
+            <div class="fg"><label>Jumlah Belanja</label><input type="text" id="qc-b" placeholder="Rp 0" oninput="qcFmt(this);qc();sbSave()"></div>
+            <div class="fg"><label>Tier Member</label>
+              <select id="qc-t" onchange="qc();sbSave()">
+                <option value="1">🥉 Bronze (1×)</option>
+                <option value="1.2">🥈 Silver (1.2×)</option>
+                <option value="1.5">🥇 Gold (1.5×)</option>
+                <option value="2">💎 Platinum (2×)</option>
+              </select>
+            </div>
+            <div class="cr" id="qc-res" style="display:none">
+              <div class="cr-row"><span>Poin Dasar</span><span class="mono" id="qc-base">—</span></div>
+              <div class="cr-row"><span>Multiplier</span><span class="mono" id="qc-mult">—</span></div>
+              <div class="cr-row"><span>Total Poin</span><span class="mono" id="qc-tot" style="color:var(--primary)">—</span></div>
+              <div class="cr-row"><span>Nilai Poin</span><span class="mono" id="qc-val" style="color:var(--success)">—</span></div>
+              <div class="cr-row"><span>Cost of Loyalty</span><span class="mono" id="qc-col">—</span></div>
+            </div>
+            <div id="qc-ph" style="text-align:center;color:var(--muted);font-size:12px;padding:14px 0">Masukkan jumlah belanja</div>
+          </div>
+        </div>
+        <div class="card mb20">
+          <div class="card-title">Alur Naik & Turun Tier — Evaluasi Akhir Tahun</div>
+          <div class="flow">
+            <div class="fn tc-br" style="color:#c97d2e"><div>🥉 Bronze</div><div style="font-size:10px;color:var(--muted);margin-top:2px">Entry</div></div>
+            <div class="fa"><div class="fa-u" id="flow-br-naik">≥ Rp250rb ↗</div><span>→</span><div class="fa-d">— tetap</div></div>
+            <div class="fn tc-si" style="color:#8a96a3"><div>🥈 Silver</div><div style="font-size:10px;color:var(--muted);margin-top:2px" id="flow-si-stay">Stay ≥ 300rb</div></div>
+            <div class="fa"><div class="fa-u" id="flow-si-naik">≥ Rp600rb ↗</div><span>→</span><div class="fa-d" id="flow-si-down">↙ &lt;300rb</div></div>
+            <div class="fn tc-go" style="color:#e6a817"><div>🥇 Gold</div><div style="font-size:10px;color:var(--muted);margin-top:2px" id="flow-go-stay">Stay ≥ 750rb</div></div>
+            <div class="fa"><div class="fa-u" id="flow-go-naik">≥ Rp1,5jt ↗</div><span>→</span><div class="fa-d" id="flow-go-down">↙ &lt;750rb</div></div>
+            <div class="fn tc-pl" style="color:#60a5fa"><div>💎 Platinum</div><div style="font-size:10px;color:var(--muted);margin-top:2px" id="flow-pl-stay">Stay ≥ 1,8jt</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MASTER PRODUK -->
+      <div id="sb-page-master" class="page">
+        <div class="ph"><div class="ph-title">Master Produk</div><div class="ph-sub">64 produk — HPP, harga jual, margin, status redeem</div></div>
+        <div class="sw"><span class="si">🔍</span><input type="text" id="mp-q" placeholder="Cari nama produk..." oninput="renderMaster()"></div>
+        <div class="fpr" id="mp-fpr">
+          <button class="fp active" data-f="semua" onclick="mpFilter(this)">Semua</button>
+          <button class="fp" data-f="Pareto A" onclick="mpFilter(this)">⭐ Pareto A</button>
+          <button class="fp" data-f="Pareto B" onclick="mpFilter(this)">Pareto B</button>
+          <button class="fp" data-f="Non-Pareto" onclick="mpFilter(this)">Non-Pareto</button>
+          <button class="fp" data-f="bisa" onclick="mpFilter(this)">✅ Bisa Redeem</button>
+          <button class="fp" data-f="tidak" onclick="mpFilter(this)">❌ Tidak Bisa</button>
+        </div>
+        <div class="tw mb8"><table>
+          <thead><tr><th>#</th><th>Nama Produk</th><th class="tr">HPP</th><th class="tr">Harga Jual</th><th class="tr">Gross Margin</th><th class="tr">GM %</th><th class="tc2">Pareto</th><th class="tr">Min. Poin</th><th>Redeem</th></tr></thead>
+          <tbody id="master-tb"></tbody>
+        </table></div>
+        <div id="mp-count" style="text-align:right;font-size:11px;color:var(--muted)"></div>
+      </div>
+
+      <!-- TIERING -->
+      <div id="sb-page-tiering" class="page">
+        <div class="ph"><div class="ph-title">Skema Tiering</div><div class="ph-sub">Parameter sistem poin dan simulasi cost of loyalty</div></div>
+        <div class="fx mb20">
+          <div class="card" style="min-width:255px;max-width:270px;flex-shrink:0;">
+            <div class="card-title">Parameter Sistem</div>
+            <div class="fg"><label>Belanja → 1 Poin (Rp)</label><input type="text" id="t-bp" value="Rp 2.000" oninput="rpFmt(this);calcT();sbSave()"></div>
+            <div class="fg"><label>Nilai Tukar 1 Poin (Rp)</label><input type="text" id="t-np" value="Rp 20" oninput="rpFmt(this);calcT();sbSave()"></div>
+            <div class="fg"><label>Simulasi Average Struk (Rp)</label><input type="text" id="t-avg" placeholder="Rp 0" oninput="rpFmt(this);calcT();sbSave()"></div>
+          </div>
+          <div class="fx1 card">
+            <div class="card-title">Cost of Loyalty per Tier</div>
+            <div class="tw-nb"><table>
+              <thead><tr><th>Tier</th><th class="tr">Poin Didapat</th><th class="tr">Nilai Poin</th><th class="tr">Cost of Loyalty</th></tr></thead>
+              <tbody id="t-sim-tb"></tbody>
+            </table></div>
+          </div>
+        </div>
+        <div class="g4">
+          <div class="tc tc-br"><div class="tc-ico">🥉</div><div class="tc-name" style="color:#c97d2e">Bronze Bun</div><div class="tc-sub">1× Multiplier</div><div class="tc-rows" id="tci-bronze"></div></div>
+          <div class="tc tc-si"><div class="tc-ico">🥈</div><div class="tc-name" style="color:#8a96a3">Silver Bun</div><div class="tc-sub">1.2× Multiplier</div><div class="tc-rows" id="tci-silver"></div></div>
+          <div class="tc tc-go"><div class="tc-ico">🥇</div><div class="tc-name" style="color:#e6a817">Gold Bun</div><div class="tc-sub">1.5× Multiplier</div><div class="tc-rows" id="tci-gold"></div></div>
+          <div class="tc tc-pl"><div class="tc-ico">💎</div><div class="tc-name" style="color:#60a5fa">Platinum Bun</div><div class="tc-sub">2× Multiplier</div><div class="tc-rows" id="tci-platinum"></div></div>
+        </div>
+      </div>
+
+      <!-- PROFITABILITAS -->
+      <div id="sb-page-profit" class="page">
+        <div class="ph"><div class="ph-title">Simulasi Profitabilitas</div><div class="ph-sub">Gross margin final per tier setelah dikurangi biaya poin</div></div>
+        <div class="fx">
+          <div class="card" style="min-width:255px;max-width:270px;flex-shrink:0;">
+            <div class="card-title">Parameter</div>
+            <div class="fg"><label>Asumsi HPP (%)</label><input type="number" id="p-hpp" value="36.55" step="0.01" oninput="calcP();sbSave()"></div>
+            <div class="fg"><label>Belanja → 1 Poin (Rp)</label><input type="text" id="p-bp" value="Rp 2.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <div class="fg"><label>Nilai 1 Poin (Rp)</label><input type="text" id="p-np" value="Rp 20" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <hr class="sep">
+            <div style="font-size:10.5px;font-weight:800;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.7px">Avg Struk per Tier</div>
+            <div class="fg"><label>🥉 Bronze</label><input type="text" id="p-abr" value="Rp 25.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <div class="fg"><label>🥈 Silver</label><input type="text" id="p-asi" value="Rp 35.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <div class="fg"><label>🥇 Gold</label><input type="text" id="p-ago" value="Rp 50.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+            <div class="fg"><label>💎 Platinum</label><input type="text" id="p-apl" value="Rp 75.000" oninput="rpFmt(this);calcP();sbSave()"></div>
+          </div>
+          <div class="fx1">
+            <div class="card mb14">
+              <div class="card-title">Gross Margin per Tier</div>
+              <div class="tw-nb"><table>
+                <thead><tr><th>Tier</th><th class="tr">Avg Struk</th><th class="tr">Est. HPP</th><th class="tr">GM Awal</th><th class="tr">Biaya Poin</th><th class="tr">GM Final</th><th class="tr">GM %</th><th>Status</th></tr></thead>
+                <tbody id="profit-tb"></tbody>
+              </table></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Aturan Baku Margin</div>
+              <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sp sp-am">✅ AMAN</span> Gross Margin ≥ 45%</div>
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sp sp-ti">⚠️ MENIPIS</span> 38%–44%</div>
+                <div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sp sp-bo">🔴 BONCOS</span> &lt;38%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REWARD -->
+      <div id="sb-page-reward" class="page">
+        <div class="ph"><div class="ph-title">Reward Berjenjang</div><div class="ph-sub">Katalog reward per tier — integrasi skema poin</div></div>
+        <div class="fpr" id="rw-fpr">
+          <button class="fp active" data-f="semua" onclick="rwFilter(this)">Semua</button>
+          <button class="fp" data-f="bronze" onclick="rwFilter(this)">🥉 Bronze</button>
+          <button class="fp" data-f="silver" onclick="rwFilter(this)">🥈 Silver</button>
+          <button class="fp" data-f="gold" onclick="rwFilter(this)">🥇 Gold</button>
+          <button class="fp" data-f="platinum" onclick="rwFilter(this)">💎 Platinum</button>
+        </div>
+        <div class="tw"><table>
+          <thead><tr><th>Tier</th><th>Nama Program</th><th>Item Reward</th><th class="tr">Harga Jual</th><th class="tr">HPP</th><th class="tr">GM%</th><th class="tr">Poin</th><th class="tr">Belanja Efektif</th><th class="tr">Rasio vs STAY</th><th>Keterangan</th></tr></thead>
+          <tbody id="rw-tb"></tbody>
+        </table></div>
+      </div>
+
+      <!-- SIMULASI PROMO -->
+      <div id="sb-page-promo" class="page">
+        <div class="ph"><div class="ph-title">Simulasi Promo & Misi</div><div class="ph-sub">Uji kelayakan promo sebelum dijalankan</div></div>
+        <div class="fx mb20">
+          <div class="card promo-panel">
+            <div class="card-title">Buat Simulasi Baru</div>
+            <div class="fg"><label>Nama Program</label><input type="text" id="pr-nm" placeholder="contoh: FREE MATCHA WEEKEND"></div>
+            <div class="fg">
+              <label>Pilih Produk</label>
+              <div class="promo-no-products" id="promo-no-products-banner">
+                ⚠️ Belum ada data produk. Import Excel dulu via tombol <b>Import Excel</b> di nav bar atas.
+              </div>
+              <div class="cw" id="cw">
+                <input type="text" class="ci" id="pr-inp" placeholder="Ketik nama produk..." oninput="cbFilter()" onclick="cbOpen()" onkeydown="cbKey(event)" autocomplete="off">
+                <span class="ca">▾</span>
+                <div class="cd" id="cb-dd"></div>
+              </div>
+              <input type="hidden" id="pr-val">
+            </div>
+            <div class="g2" style="gap:10px">
+              <div class="fg" style="margin:0"><label>Harga Jual</label><input type="text" id="pr-hj" readonly placeholder="Rp —"></div>
+              <div class="fg" style="margin:0"><label>HPP</label><input type="text" id="pr-hpp" readonly placeholder="Rp —"></div>
+            </div>
+            <div class="fg" style="margin-top:11px;display:none" id="pr-poin-wrap"><label>Min. Poin Redeem</label><input type="text" id="pr-poin" readonly placeholder="—" style="color:var(--primary);font-weight:800"></div>
+            <div class="fg" style="margin-top:11px"><label>Qty Item (Pcs)</label><input type="number" id="pr-qty" value="1" min="1" oninput="preLive()"></div>
+            <div class="fg"><label>Tipe Promo</label>
+              <select id="pr-tipe" onchange="prTipe();preLive()">
+                <option value="gratis">🎁 Gratis (Redeem Poin)</option>
+                <option value="drp">💸 Diskon Nominal (Rp)</option>
+                <option value="dpct">📉 Diskon Persen (%)</option>
+              </select>
+            </div>
+            <div class="fg" id="pr-dw" style="display:none">
+              <label id="pr-dl">Nominal Diskon (Rp)</label>
+              <input type="text" id="pr-dis" oninput="prDisInput(this);preLive()">
+            </div>
+            <div class="fg"><label>Min. Transaksi (Rp)</label><input type="text" id="pr-mt" placeholder="Rp 0" oninput="rpFmt(this);preLive()"></div>
+            <div id="pr-prev" style="display:none">
+              <hr class="sep" style="margin:12px 0">
+              <div style="font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Preview Kalkulasi</div>
+              <div class="cr">
+                <div class="cr-row"><span>HPP Total</span><span class="mono" id="pv-hpp">—</span></div>
+                <div class="cr-row"><span>Revenue</span><span class="mono" id="pv-rev">—</span></div>
+                <div class="cr-row"><span>Net Margin</span><span class="mono" id="pv-net">—</span></div>
+                <div class="cr-row"><span>Gross Margin</span><span class="mono" id="pv-gm">—</span></div>
+                <div class="cr-row"><span>Status</span><span id="pv-st">—</span></div>
+              </div>
+            </div>
+            <button class="btn btn-p" onclick="addPromo()">+ Tambah ke Simulasi</button>
+          </div>
+          <div class="fx1">
+            <div id="pr-empty" class="empty"><div class="empty-ico">📋</div><div>Belum ada simulasi promo.</div><div style="font-size:11px;margin-top:3px">Buat dari panel kiri.</div></div>
+            <div id="pr-tw" style="display:none">
+              <div class="tw"><table>
+                <thead><tr><th>#</th><th>Program</th><th>Produk</th><th class="tc2">Qty</th><th>Tipe</th><th class="tr">Detail Promo</th><th class="tr">HPP Total</th><th class="tr">Revenue</th><th class="tr">Net Margin</th><th class="tr">GM%</th><th>Status</th><th></th></tr></thead>
+                <tbody id="pr-tb"></tbody>
+              </table></div>
+            </div>
+          </div>
+        </div>
+    </div><!-- end sobun-wrapper -->
+</div><!-- end sobun-view -->
+
+<!-- IMPORT EXCEL MODAL (Sobun) -->
+<div class="xl-overlay" id="xl-overlay" onclick="xlOverlayClick(event)">
+    <div class="xl-modal">
+      <div class="xl-title">📥 Import dari Excel</div>
+      <div class="xl-sub">Upload file <strong>SKEMA_SOBAT_TAOBUN.xlsx</strong> untuk memperbarui data Master Produk, Reward, dan parameter sistem secara otomatis.</div>
+      <div class="xl-drop" id="xl-drop" ondragover="xlDrag(event,true)" ondragleave="xlDrag(event,false)" ondrop="xlDropFile(event)">
+        <input type="file" accept=".xlsx,.xls" onchange="xlFileInput(event)">
+        <div class="xl-drop-ico">📊</div>
+        <div class="xl-drop-txt" id="xl-drop-txt">Klik atau drag & drop file Excel di sini</div>
+        <div class="xl-drop-sub">.xlsx / .xls — SKEMA_SOBAT_TAOBUN.xlsx</div>
+      </div>
+      <div class="xl-progress" id="xl-progress">
+        <div class="xl-prog-bar"><div class="xl-prog-fill" id="xl-prog-fill" style="width:0%"></div></div>
+        <div class="xl-prog-txt" id="xl-prog-txt">Membaca file...</div>
+      </div>
+      <div class="xl-err" id="xl-err"></div>
+      <div class="xl-preview" id="xl-preview">
+        <div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Preview Data yang Akan Diupdate</div>
+        <div id="xl-preview-rows"></div>
+      </div>
+      <div class="xl-actions">
+        <button class="xl-btn xl-btn-cancel" onclick="xlClose()">Batal</button>
+        <button class="xl-btn xl-btn-apply" id="xl-apply-btn" disabled onclick="xlApply()">Terapkan Update</button>
+      </div>
+    </div>
+</div>
+<div class="xl-toast" id="xl-toast"></div>
+
+<!-- Import Loading Overlay -->
+<div class="import-loading" id="importLoading">
+  <div class="import-spinner"></div>
+  <div class="import-loading-txt" id="importLoadingTxt">Memproses data...</div>
+</div>
+
+</head><body>
+<h1><span class="logo">TAOBUN</span> Branch Report</h1>
+<div class="sub">Periode: ${period} &nbsp;•&nbsp; Dicetak: ${new Date().toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</div>
+
+<div class="section-title">Revenue Summary</div>
+<table>
+  <thead><tr><th>Cabang</th><th>Revenue</th><th>COGS</th><th>Gross Profit</th><th>GM %</th><th>Customers</th><th>Transaksi</th></tr></thead>
+  <tbody>
+    <tr><td class="raya"><b>🟣 Raya</b></td><td>${bcRp(r.rev)}</td><td>${bcRp(r.cogs)}</td><td>${bcRp(r.rev-r.cogs)}</td><td>${r.gm}%</td><td>${r.cust.toLocaleString('id-ID')}</td><td>${r.tx.toLocaleString('id-ID')}</td></tr>
+    <tr><td class="kemb"><b>🟡 Kemboja</b></td><td>${bcRp(k.rev)}</td><td>${bcRp(k.cogs)}</td><td>${bcRp(k.rev-k.cogs)}</td><td>${k.gm}%</td><td>${k.cust.toLocaleString('id-ID')}</td><td>${k.tx.toLocaleString('id-ID')}</td></tr>
+    <tr><td class="perd"><b>🟢 Perdos</b></td><td>${bcRp(p.rev)}</td><td>${bcRp(p.cogs)}</td><td>${bcRp(p.rev-p.cogs)}</td><td>${p.gm}%</td><td>${p.cust.toLocaleString('id-ID')}</td><td>${p.tx.toLocaleString('id-ID')}</td></tr>
+    <tr><td><b>TOTAL</b></td><td><b>${bcRp(totalRev)}</b></td><td><b>${bcRp(r.cogs+k.cogs+p.cogs)}</b></td><td><b>${bcRp(totalRev - r.cogs - k.cogs - p.cogs)}</b></td><td>—</td><td><b>${(r.cust+k.cust+p.cust).toLocaleString('id-ID')}</b></td><td><b>${(r.tx+k.tx+p.tx).toLocaleString('id-ID')}</b></td></tr>
+  </tbody>
+</table>
+
+${(tgtRaya||tgtKemb||tgtPerd) ? `
+<div class="section-title">Target vs Aktual</div>
+<table>
+  <thead><tr><th>Cabang</th><th>Target</th><th>Aktual</th><th>Pencapaian</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="raya"><b>🟣 Raya</b></td><td>${tgtRaya?bcRp(tgtRaya):'—'}</td><td>${bcRp(r.rev)}</td><td>${pctRow(r.rev,tgtRaya)}</td><td>${tgtRaya?(r.rev>=tgtRaya?'✅ Tercapai':r.rev/tgtRaya>=0.75?'⚡ On Track':'🔴 Off Track'):'—'}</td></tr>
+    <tr><td class="kemb"><b>🟡 Kemboja</b></td><td>${tgtKemb?bcRp(tgtKemb):'—'}</td><td>${bcRp(k.rev)}</td><td>${pctRow(k.rev,tgtKemb)}</td><td>${tgtKemb?(k.rev>=tgtKemb?'✅ Tercapai':k.rev/tgtKemb>=0.75?'⚡ On Track':'🔴 Off Track'):'—'}</td></tr>
+    <tr><td class="perd"><b>🟢 Perdos</b></td><td>${tgtPerd?bcRp(tgtPerd):'—'}</td><td>${bcRp(p.rev)}</td><td>${pctRow(p.rev,tgtPerd)}</td><td>${tgtPerd?(p.rev>=tgtPerd?'✅ Tercapai':p.rev/tgtPerd>=0.75?'⚡ On Track':'🔴 Off Track'):'—'}</td></tr>
+  </tbody>
+</table>` : ''}
+
+<div class="footer">TAOBUN Management Suite • CV. Roti Semua Generasi • Laporan ini di-generate otomatis dari sistem.</div>
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => { win.focus(); win.print(); }, 400);
+  richToast(`📄 Membuka preview PDF untuk ${period}...`);
+}
+
+function bcSave(r, k, p) {
+  const data = {};
+  const fields = ['rev','cust','tx','basket','new_c','cogs'];
+  fields.forEach(f => {
+    const sfx = f === 'new_c' ? 'new' : f;
+    data[`raya_${f}`] = document.getElementById(`br-raya-${sfx}`)?.value || '0';
+    data[`kemb_${f}`] = document.getElementById(`br-kemb-${sfx}`)?.value || '0';
+    data[`perd_${f}`] = document.getElementById(`br-perd-${sfx}`)?.value || '0';
+  });
+  try { localStorage.setItem(LS_KEY_BRANCH, JSON.stringify(data)); } catch(e) {}
+}
+
+function bcLoad() {
+  try {
+    const raw = localStorage.getItem(LS_KEY_BRANCH);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    const map = { rev: 'rev', cust: 'cust', tx: 'tx', basket: 'basket', new_c: 'new', cogs: 'cogs' };
+    Object.entries(map).forEach(([key, sfx]) => {
+      const rEl = document.getElementById(`br-raya-${sfx}`);
+      const kEl = document.getElementById(`br-kemb-${sfx}`);
+      const pEl = document.getElementById(`br-perd-${sfx}`);
+      if (rEl && d[`raya_${key}`]) rEl.value = d[`raya_${key}`];
+      if (kEl && d[`kemb_${key}`]) kEl.value = d[`kemb_${key}`];
+      if (pEl && d[`perd_${key}`]) pEl.value = d[`perd_${key}`];
+    });
+    bcCalculate();
+    bcLoadTargets();
+    bcRenderHistory();
+    updatePeriodBadge();
+  } catch(e) {}
+}
+
+function bcReset() {
+  showConfirm({
+    icon: '🗑️', title: 'Reset Branch Data?',
+    msg: 'Semua data input cabang akan dikosongkan. Target dan histori tetap tersimpan.',
+    okLabel: 'Reset'
+  }, function() {
+    ['rev','cust','tx','basket','new','cogs'].forEach(f => {
+      ['raya','kemb','perd'].forEach(b => {
+        const el = document.getElementById(`br-${b}-${f}`);
+        if (el) el.value = '0';
+      });
+    });
+    try { localStorage.removeItem(LS_KEY_BRANCH); } catch(e) {}
+    bcCalculate();
+    richToast('✅ Data ketiga cabang berhasil direset.');
+    buildHomeAlerts();
+    checkOnboarding();
+  });
+}
+
+// ═══════════════════════════════════════════
+// Init sobun on load
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// PASSWORD GATE — Sobat Taobun
+// ═══════════════════════════════════════════
+// Password disimpan sebagai hash SHA-256.
+// Untuk ganti password: jalankan fungsi pwHashPassword('passwordbaru')
+// di console browser, lalu simpan hash-nya ke PW_HASH_KEY di localStorage.
+// ═══════════════════════════════════════════
+const PW_HASH_KEY = 'taobun_pw_hash_v1';
+// Hash SHA-256 dari password default (taobun2026).
+// Ganti string ini jika ingin ubah password default.
+const PW_DEFAULT_HASH = 'e53ceb6dfdb5845b305c826e2da049f495d66037df60056d14ee8bcea7779900';
+
+async function pwHashPassword(plain) {
+  const enc = new TextEncoder().encode(plain);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function pwGetHash() {
+  try { return localStorage.getItem(PW_HASH_KEY) || PW_DEFAULT_HASH; } catch(e) { return PW_DEFAULT_HASH; }
+}
+
+function pwOpen() {
+  const overlay = document.getElementById('pwOverlay');
+  overlay.classList.add('open');
+  const inp = document.getElementById('pwInput');
+  inp.value = '';
+  inp.type = 'password';
+  document.getElementById('pwToggleBtn').textContent = '👁';
+  document.getElementById('pwErrMsg').textContent = '';
+  inp.classList.remove('pw-error');
+  setTimeout(() => inp.focus(), 150);
+}
+
+function pwClose() {
+  document.getElementById('pwOverlay').classList.remove('open');
+}
+
+function pwToggleShow() {
+  const inp = document.getElementById('pwInput');
+  const btn = document.getElementById('pwToggleBtn');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function pwSubmit() {
+  const inp = document.getElementById('pwInput');
+  const val = inp.value;
+  if (!val) {
+    document.getElementById('pwErrMsg').textContent = 'Password tidak boleh kosong.';
+    inp.classList.add('pw-error');
+    return;
+  }
+  const inputHash = await pwHashPassword(val);
+  const storedHash = await pwGetHash();
+  if (inputHash !== storedHash) {
+    document.getElementById('pwErrMsg').textContent = '❌ Password salah. Coba lagi.';
+    inp.classList.add('pw-error');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('pw-error'), 700);
+    return;
+  }
+  window._sobunUnlocked = true;
+  sessionStorage.setItem('taobun_sobun_unlocked', '1');
+  pwClose();
+  showView('sobun-view');
+}
+
+// ── Import Excel password gate ──
+function pwImportClose() {
+  document.getElementById('pwImportOverlay').classList.remove('open');
+  xlParsed = null;
+  xlToast('ℹ️ Update data dibatalkan.');
+}
+
+function pwImportToggleShow() {
+  const inp = document.getElementById('pwImportInput');
+  const btn = document.getElementById('pwImportToggleBtn');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function pwImportSubmit() {
+  const inp = document.getElementById('pwImportInput');
+  const val = inp.value;
+  if (!val) {
+    document.getElementById('pwImportErrMsg').textContent = 'Password tidak boleh kosong.';
+    inp.classList.add('pw-error');
+    return;
+  }
+  const inputHash = await pwHashPassword(val);
+  const storedHash = await pwGetHash();
+  if (inputHash !== storedHash) {
+    document.getElementById('pwImportErrMsg').textContent = '❌ Password salah. Coba lagi.';
+    inp.classList.add('pw-error');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('pw-error'), 700);
+    return;
+  }
+  // Password benar — terapkan semua data Excel
+  document.getElementById('pwImportOverlay').classList.remove('open');
+  const d = xlParsed;
+  if (!d) { xlToast('⚠️ Tidak ada data Excel yang menunggu.'); return; }
+
+  const changes = [];
+  const rp = v => 'Rp ' + Math.round(v).toLocaleString('id-ID');
+
+  // Sheet 1: Master Produk
+  if (d.products && d.products.length > 0) {
+    const oldCount = P.length;
+    P.length = 0; d.products.forEach(p => P.push(p));
+    changes.push(`📦 Master Produk: ${oldCount} → ${d.products.length} produk`);
+  }
+
+  // Sheet 2: Skema Tiering
+  if (d.tiering) {
+    const setRp = (id, v) => { const el = document.getElementById(id); if(el) el.value = 'Rp ' + v.toLocaleString('id-ID'); };
+    setRp('t-bp', d.tiering.bp); setRp('p-bp', d.tiering.bp);
+    setRp('t-np', d.tiering.np); setRp('p-np', d.tiering.np);
+    changes.push(`⚙️ Tiering: ${rp(d.tiering.bp)}/poin, nilai ${rp(d.tiering.np)}`);
+  }
+
+  // Sheet 3: Simulasi Profitabilitas — HPP % + avg struk per tier
+  if (d.hppPct !== undefined) {
+    const el = document.getElementById('p-hpp');
+    if(el) el.value = d.hppPct.toFixed(2);
+    changes.push(`📊 HPP Assumption: ${d.hppPct.toFixed(2)}%`);
+  }
+  if (d.avgStruk) {
+    const setRp2 = (id, v) => { const el = document.getElementById(id); if(el && v > 0) el.value = 'Rp ' + v.toLocaleString('id-ID'); };
+    setRp2('p-abr', d.avgStruk.bronze);
+    setRp2('p-asi', d.avgStruk.silver);
+    setRp2('p-ago', d.avgStruk.gold);
+    setRp2('p-apl', d.avgStruk.platinum);
+    const filled = ['bronze','silver','gold','platinum'].filter(k=>d.avgStruk[k]>0);
+    if(filled.length) changes.push(`📊 Avg Struk: ${filled.length} tier diupdate`);
+  }
+
+  // Sheet 3: Tier thresholds (naik/stay) — update TIER_TH state & display
+  if (d.thresholds) {
+    let tCount = 0;
+    // Map dari Excel: silver naik=3jt→250rb? 
+    // Excel pakai nilai TAHUNAN (3.000.000). Di UI pakai shorthand.
+    // Tapi nilai di Excel row14-16 col2=NAIK col3=STAY
+    // Silver: naik=3000000 di Excel = threshold naik dari bronze ke silver
+    // Kita map: bronze.naik = silver threshold NAIK (belanja min utk naik dari bronze)
+    const th = d.thresholds;
+    if (th.silver)   { TIER_TH.bronze.naik  = th.silver.naik;   TIER_TH.silver.stay  = th.silver.stay;   tCount += 2; }
+    if (th.gold)     { TIER_TH.silver.naik  = th.gold.naik;     TIER_TH.gold.stay    = th.gold.stay;     tCount += 2; }
+    if (th.platinum) { TIER_TH.gold.naik    = th.platinum.naik; TIER_TH.platinum.stay= th.platinum.stay; tCount += 2; }
+    TIER_TH.platinum.naik = TIER_TH.platinum.stay;
+    updateTierDisplay();
+    if (tCount) changes.push('🎯 Threshold Tier: diupdate dari Excel');
+  }
+
+  // Sheet 4: Simulasi Misi & Promo
+  if (d.promos && d.promos.length > 0) {
+    promos = d.promos;
+    renderPromo();
+    const aman = d.promos.filter(p=>p.gm>=0.45).length;
+    const boncos = d.promos.filter(p=>p.gm<0.38).length;
+    changes.push(`🎯 Promo: ${d.promos.length} program (${aman} aman${boncos?' · '+boncos+' boncos':''})`);
+  }
+
+  // Sheet 5: Simulasi Reward
+  if (d.rewards && d.rewards.length > 0) {
+    RW = d.rewards;
+    renderRw();
+    const byTier = {bronze:0,silver:0,gold:0,platinum:0};
+    d.rewards.forEach(r=>{ if(byTier[r.t]!==undefined) byTier[r.t]++; });
+    const summary = Object.entries(byTier).filter(([,v])=>v>0).map(([k,v])=>v+' '+k).join(', ');
+    changes.push(`🏆 Reward: ${d.rewards.length} reward (${summary})`);
+  }
+
+  initDash(); renderMaster(); calcT(); calcP(); renderRw(); cbRender();
+  sbSave(); // save AFTER apply, before any load
+  
+  // ── SIMPAN SEBAGAI EXCEL BASELINE (data permanen) ──
+  // Data ini akan jadi default yang tidak bisa diubah sampai Excel baru diimport
+  try {
+    const baseline = {
+      importedAt: new Date().toISOString(),
+      products: d.products && d.products.length > 0 ? d.products.slice() : null,
+      tiering: d.tiering || null,
+      hppPct: d.hppPct !== undefined ? d.hppPct : null,
+      avgStruk: d.avgStruk || null,
+      thresholds: d.thresholds || null,
+      promos: d.promos && d.promos.length > 0 ? d.promos.slice() : null,
+      rewards: d.rewards && d.rewards.length > 0 ? d.rewards.slice() : null,
+      // Snapshot nilai field saat ini untuk restore
+      fields: {
+        t_bp: document.getElementById('t-bp')?.value,
+        t_np: document.getElementById('t-np')?.value,
+        p_hpp: document.getElementById('p-hpp')?.value,
+        p_bp: document.getElementById('p-bp')?.value,
+        p_np: document.getElementById('p-np')?.value,
+        p_abr: document.getElementById('p-abr')?.value,
+        p_asi: document.getElementById('p-asi')?.value,
+        p_ago: document.getElementById('p-ago')?.value,
+        p_apl: document.getElementById('p-apl')?.value,
+      },
+      tierThresholds: JSON.parse(JSON.stringify(TIER_TH)),
+    };
+    localStorage.setItem(LS_KEY_EXCEL_BASELINE, JSON.stringify(baseline));
+    _xlBaselineLoaded = true;
+    applyExcelBaslineLock(true);
+    console.log('[Excel Baseline] Disimpan:', new Date(baseline.importedAt).toLocaleString('id-ID'));
+  } catch(e) { console.warn('[Excel Baseline] Gagal simpan:', e); }
+  
+  xlParsed = null;
+
+  const msg = changes.length
+    ? '✅ Data diupdate!\n' + changes.join('\n')
+    : '✅ Data diupdate & disimpan!';
+  xlToast(msg.split('\n')[0] + (changes.length > 1 ? ` (+${changes.length-1} lainnya)` : '') + ' · 🔒 Disimpan sebagai data default');
+  console.log('[Import Sobat Taobun] Perubahan:\n' + changes.join('\n'));
+}
+
+function initSobun(){
+  initDash();renderMaster();calcT();calcP();renderRw();cbRender();sbLoad();
+  renderPromo(); // Pastikan promo dari baseline ikut dirender
+}
+
+window.onload = () => {
+    // Sync anti-flash theme from <html> to <body> immediately
+    const savedTheme = document.documentElement.getAttribute('data-theme');
+    if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
+    else document.body.setAttribute('data-theme', 'light');
+
+    // Build month/year dropdowns
+    const monthContainers = document.querySelectorAll('.month-options-list');
+    monthContainers.forEach(container => {
+        months.forEach(m => {
+            let d = document.createElement('div'); d.className = 'option-item'; d.textContent = m.l;
+            d.onclick = () => selectOption('Month', m.v, m.l);
+            container.appendChild(d);
+        });
+    });
+
+    const yearContainers = document.querySelectorAll('.year-options-list');
+    yearContainers.forEach(container => {
+        for(let i=2026; i<=2030; i++) { 
+            let d = document.createElement('div'); d.className = 'option-item'; d.textContent = i;
+            d.onclick = () => selectOption('Year', i.toString(), i.toString());
+            container.appendChild(d);
+        }
+    });
+
+    // Init core dashboard first (fast), defer heavy Sobun init slightly
+    initCharts();
+    loadData();
+    // Apply correct chart colors after theme is loaded from localStorage
+    updateChartTheme();
+
+    // Keybind logic
+    const inputs = Array.from(document.querySelectorAll('.nav-input, .lead-field'));
+    inputs.forEach((input, index) => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); if (inputs[index+1]) inputs[index+1].focus(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); if (inputs[index-1]) inputs[index-1].focus(); }
+        });
+    });
+
+    // Defer Sobun init to next frame so home view renders first
+    requestAnimationFrame(() => {
+        initSobun();
+        bcLoad();
+        updatePeriodBadge();
+        checkOnboarding();
+        buildHomeAlerts();
+
+        // ── RESTORE VIEW AKTIF setelah refresh ──
+        try {
+            const savedView = localStorage.getItem('taobun_active_view');
+            if (savedView && savedView !== 'home-view') {
+                const targetEl = document.getElementById(savedView);
+                if (targetEl) {
+                    if (savedView === 'sobun-view') {
+                        // Cek apakah sobun sudah pernah di-unlock di session ini
+                        // atau di session sebelumnya (simpan di sessionStorage)
+                        const wasUnlocked = sessionStorage.getItem('taobun_sobun_unlocked') === '1';
+                        if (wasUnlocked) {
+                            window._sobunUnlocked = true;
+                            // Langsung tampilkan sobun tanpa password gate
+                            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('view-active'));
+                            targetEl.classList.add('view-active');
+                        }
+                        // Kalau belum unlock, biarkan di home
+                    } else {
+                        showView(savedView);
+                    }
+                }
+            }
+        } catch(e) {}
+
+        // ── RESTORE TAB AKTIF SOBAT TAOBUN setelah refresh ──
+        try {
+            const savedTab = localStorage.getItem('taobun_active_sobun_tab');
+            if (savedTab) {
+                const tabEl = document.getElementById('sb-page-' + savedTab);
+                const navBtn = Array.from(document.querySelectorAll('.sobun-wrapper .nav-tab'))
+                    .find(btn => btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'" + savedTab + "'"));
+                if (tabEl && navBtn) {
+                    document.querySelectorAll('.sobun-wrapper .page').forEach(p => p.classList.remove('active'));
+                    document.querySelectorAll('.sobun-wrapper .nav-tab').forEach(t => t.classList.remove('active'));
+                    tabEl.classList.add('active');
+                    navBtn.classList.add('active');
+                    if (savedTab === 'master')         renderMaster();
+                    else if (savedTab === 'reward')    renderRw();
+                    else if (savedTab === 'dashboard') initDash();
+                    else if (savedTab === 'tiering')   calcT();
+                    else if (savedTab === 'profit')    calcP();
+                    else if (savedTab === 'promo')     cbRender();
+                }
+            }
+        } catch(e) {}
+    });
+
+    // Close dropdowns on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.custom-select-container')) {
+            document.querySelectorAll('.custom-select-container').forEach(c => c.classList.remove('active'));
+        }
+    });
+};
+</script>
+
+<!-- Rich Toast -->
+<div class="rich-toast" id="richToast"></div>
+
+
+<!-- Logika aplikasi terpisah -->
+<script src="app.js"></script>
+
+</body>
+</html>
